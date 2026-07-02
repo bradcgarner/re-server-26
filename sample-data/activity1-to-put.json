@@ -1,0 +1,81 @@
+{
+  "newActivities": [
+    {
+      "id_activity_temp": "2026-06-24 15:51:56 -0400",
+      "date_convo_year": 2026,
+      "date_convo_month": 5,
+      "date_convo_day": 24,
+      "date_convo_timestamp": "2026-06-24T19:51:56.690Z",
+      "convo_relationship": 2,
+      "convo_main_purpose": 29,
+      "convo_method": 26,
+      "convo_tone": 41,
+      "convo_model": 45,
+      "convo_intentional": 53,
+      "convo_intentional_binary": 168,
+      "convo_type": 166,
+      "convo_voice_note": 144,
+      "convo_problem_solve": 62,
+      "convo_deal_found": 73
+    },
+    {
+      "id_activity_temp": "2026-06-24 15:51:56 -0400-X",
+      "date_fu_year": 2026,
+      "date_fu_month": 6,
+      "date_fu_day": 1,
+      "date_fu_timestamp": "2026-07-01T19:53:15.210Z",
+      "id_contact_fu_temp": "2026-06-24 15:51:56 -0400-main-0",
+      "id_deal_fu_temp": "2026-06-24 15:51:56 -0400-deal-0",
+      "fu_purpose": 28,
+      "fu_notes": "Check in on that new home deal!"
+    }
+  ],
+  "newContacts": [
+    {
+      "id_contact_temp": "2026-06-24 15:51:56 -0400-main-0",
+      "contact_how_met": 8,
+      "contact_name_first": "Brad",
+      "contact_name_last": "Garner",
+      "contact_phone": "7037314163",
+      "contact_email": "brad@bradgarner.com"
+    }
+  ],
+  "newDeals": [
+    {
+      "id_deal_temp": "2026-06-24 15:51:56 -0400-deal-0",
+      "deal_name": "New Home",
+      "deal_address": "123 Banana St",
+      "deal_how_found": 87,
+      "deal_how_found_categ": 95,
+      "deal_trigger": 101,
+      "deal_type": 115,
+      "deal_stage": 120,
+      "deal_timeline_stated": 128,
+      "deal_timeline_status": "162",
+      "deal_value": 567000,
+      "deal_value_status": 155,
+      "deal_commission_rate": 136,
+      "deal_gci": 19845,
+      "date_deal_year": 2028,
+      "date_deal_month": 5,
+      "date_deal_day": 1,
+      "date_deal_timestamp": "2028-06-13T19:52:59.335Z"
+    }
+  ],
+  "id_activity_temp": "2026-06-24 15:51:56 -0400",
+  "connectionsHash": {
+    "2026-06-24 15:51:56 -0400-main-0": {
+      "id_contact_temp": "2026-06-24 15:51:56 -0400-main-0",
+      "connection_record_type": "main"
+    }
+  },
+  "newActivityTempIdsHash": {
+    "2026-06-24 15:51:56 -0400-X": true
+  },
+  "newContactTempIdsHash": {
+    "2026-06-24 15:51:56 -0400-main-0": true
+  },
+  "newDealTempIdsHash": {
+    "2026-06-24 15:51:56 -0400-deal-0": true
+  }
+}

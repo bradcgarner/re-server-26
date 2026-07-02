@@ -1,0 +1,98 @@
+{
+  "newActivities": [
+    {
+      "id_activity_temp": "2026-06-23 21:35:20 -0400",
+      "date_convo_year": 2026,
+      "date_convo_month": 5,
+      "date_convo_day": 21,
+      "date_convo_timestamp": "2026-06-21T12:00:00.000Z",
+      "convo_relationship": 2,
+      "convo_main_purpose": 33,
+      "convo_method": 22,
+      "convo_tone": 40,
+      "convo_model": 44,
+      "convo_intentional": 52,
+      "convo_intentional_binary": 168,
+      "convo_type": 166,
+      "convo_voice_note": 145,
+      "convo_problem_solve": 59,
+      "convo_notes": "Whatever we talked about blah blah blah...",
+      "convo_deal_found": 73
+    },
+    {
+      "id_activity_temp": "2026-06-23 21:35:20 -0400-X",
+      "date_fu_year": 2026,
+      "date_fu_month": 5,
+      "date_fu_day": 29,
+      "date_fu_timestamp": "2026-06-29T12:00:00.000Z",
+      "id_deal_fu_temp": "2026-06-23 21:35:20 -0400-deal-0",
+      "fu_purpose": 30,
+      "fu_notes": "call him soon"
+    }
+  ],
+  "newContacts": [
+    {
+      "id_contact": null,
+      "id_activity_temp": "2026-06-23 21:35:20 -0400-X",
+      "id_contact_temp": "2026-06-23 21:35:20 -0400-main-0",
+      "contact_how_met": 8,
+      "contact_notes": "Brad is a nice guy",
+      "contact_name_first": "Brad",
+      "contact_name_last": "Garner",
+      "contact_phone": "7037314163",
+      "contact_email": "brad@bradgarner.com",
+      "contact_vp_status": 170,
+      "connection_record_type": "main"
+    },
+    {
+      "id_contact": null,
+      "id_activity_temp": "2026-06-23 21:35:20 -0400-X",
+      "id_contact_temp": "2026-06-23 21:35:20 -0400-connection-1",
+      "contact_how_met": 9,
+      "contact_notes": "Prefer to paint luxury homes",
+      "contact_vp_categories": "painting, drywall, floor refinishing",
+      "contact_name_first": "Ron's Painting",
+      "contact_name_last": "Ron ?",
+      "contact_phone": "555.234.9124",
+      "contact_email": "ron@thebestpainter.com",
+      "contact_vp_status": 171,
+      "connection_record_type": "connection"
+    }
+  ],
+  "newDeals": [
+    {
+      "id_deal": null,
+      "id_activity_temp": "2026-06-23 21:35:20 -0400-X",
+      "id_deal_temp": "2026-06-23 21:35:20 -0400-deal-0",
+      "deal_name": "Garner beach house, Rehoboth",
+      "deal_address": "17000 Black Oak Dr",
+      "deal_how_found": 86,
+      "deal_how_found_categ": 95,
+      "deal_trigger": 101,
+      "deal_type": 111,
+      "deal_stage": 118,
+      "deal_timeline_stated": 125,
+      "deal_timeline_status": "162",
+      "deal_notes": "Pre-approved for $800K, wants to stay less than that.",
+      "deal_value": 750000,
+      "deal_value_status": 154,
+      "deal_commission_rate": 137,
+      "deal_gci": 22500,
+      "date_deal_year": 2027,
+      "date_deal_month": 1,
+      "date_deal_day": 1,
+      "date_deal_timestamp": "2027-02-19T01:39:04.995Z"
+    }
+  ],
+  "id_activity_temp": "2026-06-23 21:35:20 -0400",
+  "newActivityTempIdsHash": {
+    "2026-06-23 21:35:20 -0400-X": true
+  },
+  "newContactTempIdsHash": {
+    "2026-06-23 21:35:20 -0400-main-0": true,
+    "2026-06-23 21:35:20 -0400-connection-1": true
+  },
+  "newDealTempIdsHash": {
+    "2026-06-23 21:35:20 -0400-deal-0": true
+  }
+}
