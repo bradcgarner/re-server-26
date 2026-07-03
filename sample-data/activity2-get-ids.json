@@ -1,46 +1,16 @@
 {
-  "activityTempIds": [
-    "2026-06-24 15:51:56 -0400-X"
-  ],
-  "contactTempIds": [
-    "2026-06-24 15:51:56 -0400-main-0"
-  ],
-  "dealTempIds": [
-    "2026-06-24 15:51:56 -0400-deal-0"
-  ],
-  "id_activity_final": 44,
+  "activityTempIds": [],
+  "contactTempIds": [],
+  "dealTempIds": [],
+  "id_activity_final": 47,
   "promisesResponses": [
     {
       "success": true,
       "error": null,
       "data": null,
       "count": null,
-      "status": 201,
-      "statusText": "Created"
-    },
-    {
-      "success": true,
-      "error": null,
-      "data": null,
-      "count": null,
-      "status": 201,
-      "statusText": "Created"
-    },
-    {
-      "success": true,
-      "error": null,
-      "data": null,
-      "count": null,
-      "status": 201,
-      "statusText": "Created"
-    },
-    {
-      "success": true,
-      "error": null,
-      "data": null,
-      "count": null,
-      "status": 201,
-      "statusText": "Created"
+      "status": 204,
+      "statusText": "No Content"
     }
   ],
   "activitiesResponses": {
@@ -48,7 +18,7 @@
     "error": null,
     "data": [
       {
-        "id_activity": 44
+        "id_activity": 47
       }
     ],
     "count": null,
@@ -58,12 +28,7 @@
   "followUpResponses": {
     "success": true,
     "error": null,
-    "data": [
-      {
-        "id_activity": 45,
-        "id_activity_temp": "2026-06-24 15:51:56 -0400-X"
-      }
-    ],
+    "data": [],
     "count": null,
     "status": 200,
     "statusText": "OK"
@@ -71,12 +36,7 @@
   "contactResponses": {
     "success": true,
     "error": null,
-    "data": [
-      {
-        "id_contact": 38,
-        "id_contact_temp": "2026-06-24 15:51:56 -0400-main-0"
-      }
-    ],
+    "data": [],
     "count": null,
     "status": 200,
     "statusText": "OK"
@@ -84,14 +44,38 @@
   "dealResponses": {
     "success": true,
     "error": null,
-    "data": [
-      {
-        "id_deal": 24,
-        "id_deal_temp": "2026-06-24 15:51:56 -0400-deal-0"
-      }
-    ],
+    "data": [],
     "count": null,
     "status": 200,
     "statusText": "OK"
+  },
+  "connectionsResponses": {
+    "success": true,
+    "error": null,
+    "data": [],
+    "count": null,
+    "status": 200,
+    "statusText": "OK"
+  },
+  "activitiesDealsResponses": {
+    "success": true,
+    "error": null,
+    "data": [],
+    "count": null,
+    "status": 200,
+    "statusText": "OK"
+  },
+  "contactsDealsResponses": {
+    "success": false,
+    "error": {
+      "code": "42703",
+      "details": null,
+      "hint": null,
+      "message": "column contacts_deals.id_activity does not exist"
+    },
+    "data": null,
+    "count": null,
+    "status": 400,
+    "statusText": "Bad Request"
   }
 }

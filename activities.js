@@ -7,8 +7,8 @@ const {
 	isObjectLiteral, 
 	convertArrayToObject } = require('conjunction-junction');
 
-const { formatActivityToPut,
-	formatInsertPromises,
+const { getIdAgent,
+	formatActivityPut,
 	formatUpdatePromises, 
 	createFinalActivity } = require('./activities-helpers');
 
@@ -18,12 +18,13 @@ const supabaseKey = process.env.SUPABASE_SECRET_KEY;
 const supabase = createClient(supabaseUrl, supabaseKey);
 
 const { jwtStrategy } = require('./auth');
+const { isPrimitiveNumber } = require('conjunction-junction/build/basic');
 const userContainer = {};
 router.use((req, res, next)=>jwtStrategy(req, res, next, userContainer));
 
-let id_agent = 1;
 
 router.get('/follow-ups', (req, res)=>{
+	const id_agent = getIdAgent(userContainer);
 
 	return new Promise(resolve => {
 		resolve();
@@ -36,7 +37,7 @@ router.get('/follow-ups', (req, res)=>{
 				id_contact_fu,
 				id_agent,
 				date_fu_timestamp,
-				fu_purpose`)
+				fu_purpose, fu_notes`)
 			.not('date_fu_timestamp','is',null)
 			.eq('id_agent', id_agent)
 			.order('date_convo_timestamp')
@@ -51,9 +52,9 @@ router.get('/follow-ups', (req, res)=>{
 	})
 });
 
-router.get('/:id_activity', (req, res)=>{
-  const id_activity = req.params.id_activity;
-  if(!id_activity) throw { message: 'invalid id_activity' };
+const getActivityById = (id_activity, res) => {
+	
+	const id_agent = getIdAgent(userContainer);
 
 	let activity = {};
 	let contacts = [];
@@ -79,6 +80,7 @@ router.get('/:id_activity', (req, res)=>{
 	.then(r=>{
 		const { data, error } = r;
 		activity = Array.isArray(data) ? data[0] : {};
+		// console.log('from db', {activity})
 		activity.date_convo = {
 			date_convo_day:       activity.date_convo_day,
 			date_convo_month:     activity.date_convo_month,
@@ -100,7 +102,7 @@ router.get('/:id_activity', (req, res)=>{
 	.then(r=>{
 		const { data, error } = r;
 		connectionsJoins = Array.isArray(data) ? data : [];
-		
+		// console.log({connectionsJoins});
 		const contactIds = connectionsJoins.map(c=>{
 			return c.id_contact;
 		});
@@ -121,12 +123,9 @@ router.get('/:id_activity', (req, res)=>{
 
 		connectionsJoins.forEach(j=>{
 			const foundContact = allContactHash[`${j.id_contact}`];
-			if(foundContact){
-
-			}
 			const finalConnection = Object.assign({}, foundContact,
 				{
-					id_conection: j.id_conection,
+					id_connection: j.id_connection,
 					connection_type: j.connection_type,
 					connection_record_type: j.connection_record_type,
 					connection_vp_reference: j.connection_vp_reference,
@@ -138,7 +137,8 @@ router.get('/:id_activity', (req, res)=>{
 			} else {
 				activity.connections.push(finalConnection);
 			}
-		})
+		});
+		// console.log({contacts: activity.contacts})
 
 		// GET ALL DEALS
 		return supabase
@@ -206,9 +206,18 @@ router.get('/:id_activity', (req, res)=>{
 		console.error(err);
 		return res.status(500).json(err);
 	})
+};
+
+router.get('/:id_activity', (req, res)=>{
+  const id_activity = req.params.id_activity;
+  if(!id_activity) throw { message: 'invalid id_activity' };
+
+	return getActivityById(id_activity, res);
+
 });
 
 router.get('/', (req, res)=>{
+	const id_agent = getIdAgent(userContainer);
 
 	return new Promise(resolve => {
 		resolve();
@@ -222,7 +231,7 @@ router.get('/', (req, res)=>{
 				)`)
 			.not('date_convo_timestamp','is',null)
 			.eq('id_agent', id_agent)
-			.order('date_convo_timestamp')
+			.order('date_convo_timestamp', {ascending: false})
 	})
 	.then(r=>{
 		const { data, error } = r;
@@ -248,42 +257,42 @@ router.get('/', (req, res)=>{
 });
 
 router.put('/', (req, res)=>{
+	const id_agent = getIdAgent(userContainer);
+	
 	const activity = req.body;
 	if(!isObjectLiteral(activity)){
 		return res.status(500).json({error:'body is not an object'});
 	}
-	const activityToPut = formatActivityToPut(activity);
-	
-	const insertionPromises = formatInsertPromises(activityToPut, supabase);
-
 	const {
+		fus4DBTempIds,
+		contacts4DBTempIdHash,
+		contacts4DBTempIds,
+		deals4DBTempIds,
 		id_activity_temp,
-		newActivityTempIdsHash,
-		newContactTempIdsHash,
-		newDealTempIdsHash } = activityToPut;
+		id_activity,
+		insertionPromises,
+	} = formatActivityPut(activity, supabase);
 
-	const activityTempIds = Object.keys(newActivityTempIdsHash);
-	const contactTempIds = Object.keys(newContactTempIdsHash);
-  const dealTempIds = Object.keys(newDealTempIdsHash);
-
-	let id_activity_final        = 0;
-	let promisesResponses        = null;
-	let activitiesResponses      = null;
-	let followUpResponses        = null;
-	let contactResponses         = null;
-	let dealResponses            = null;
-	let connectionsResponses     = null;
-	let activitiesDealsResponses = null;
-	let contactsDealsResponses   = null;
-
-	let theActivity    = {};
-	let getIdResponses = {};
-	let finalActivity  = {};
+	let id_activity_final        = activity.id_activity || 0;
+	let fuResponses              = [];
+	let contactResponses         = [];
+	let dealResponses            = [];
+	let connectionsResponses     = [];
+	let activitiesDealsResponses = [];
+	let contactsDealsResponses   = [];
 
 	// @@@@@@@ INSERT ACTIVITIES, DEALS, CONTACTS @@@@@@@
 	return Promise.all(insertionPromises)
 		.then(r=>{
-			promisesResponses = r;
+			// if(Array.isArray(r)){
+			// 	r.forEach((p,i)=>{
+			// 		if(p.error){ 
+			// 			console.log(`ERROR 1 @ ${i}`, p.error) 
+			// 		} else {
+			// 			console.log(`INSERT 1 @ ${i}`, p.data)
+			// 		}
+			// 	})
+			// }
 			return;
 		})
 		// @@@@@@ GET ID OF ACTIVITY JUST INSERTED @@@@@@@@
@@ -294,39 +303,43 @@ router.put('/', (req, res)=>{
 				.eq('id_activity_temp', id_activity_temp)
 		})
 		.then(r=>{
-			activitiesResponses = r;
+			// if(r.error){ console.log('ERROR 3', r.error) }
 			if(Array.isArray(r.data)){
-				if(r.data[0]){
+				if(!id_activity_final && r.data[0]){
 					id_activity_final = r.data[0].id_activity;
 				}
 			}
+			console.log({id_activity_final})
 
 			// @@@@@@ GET ID OF FOLLOW-UPS JUST INSERTED @@@@@@@@
 			return supabase
 				.from('activities')
 				.select('id_activity, id_activity_temp')
-				.in('id_activity_temp', activityTempIds)
+				.in('id_activity_temp', fus4DBTempIds)
 		})
 		.then(r=>{
-			followUpResponses = r;
+			// if(r.error){ console.log('ERROR 4', r.error) }
+			fuResponses = Array.isArray(r.data) ? r.data : [] ;
 
 			// @@@@@@ GET ID OF CONTACTS JUST INSERTED @@@@@@@@
 			return supabase
 				.from('contacts')
 				.select('id_contact, id_contact_temp')
-				.in('id_contact_temp', contactTempIds)
+				.in('id_contact_temp', contacts4DBTempIds)
 		})
 		.then(r=>{
-			contactResponses = r;
+			if(r.error){ console.log('ERROR 5', r.error) }
+			contactResponses = Array.isArray(r.data) ? r.data : [] ;
 
 		// @@@@@@ GET ID OF DEALS JUST INSERTED @@@@@@@@
 			return supabase
 				.from('deals')
 				.select('id_deal, id_deal_temp')
-				.in('id_deal_temp', dealTempIds)
+				.in('id_deal_temp', deals4DBTempIds)
 		})
 		.then(r=>{
-			dealResponses = r;
+			if(r.error){ console.log('ERROR 6', r.error) }
+			dealResponses = Array.isArray(r.data) ? r.data : [] ;
 
 			// @@@@@@ GET ID OF CONNECTIONS THIS ACTIVITY  @@@@@@@@
 			return supabase
@@ -335,7 +348,8 @@ router.put('/', (req, res)=>{
 				.eq('id_activity', id_activity_final)
 		})
 		.then(r=>{
-			connectionsResponses = r;
+			// if(r.error){ console.log('ERROR 7', r.error) }
+			connectionsResponses = Array.isArray(r.data) ? r.data : [] ;
 
 			// @@@@@@ GET ID OF ACTIVITIES_DEALS THIS ACTIVITY  @@@@@@@@
 			return supabase
@@ -344,165 +358,48 @@ router.put('/', (req, res)=>{
 				.eq('id_activity', id_activity_final)
 		})
 		.then(r=>{
-			activitiesDealsResponses = r;
+			// if(r.error){ console.log('ERROR 8', r.error) }
+			activitiesDealsResponses = Array.isArray(r.data) ? r.data : [] ;
 
 			// @@@@@@ GET ID OF CONTACTS_DEALS THIS ACTIVITY  @@@@@@@@
+			// CHANGE THIS TO LOOK FOR CONTACTS... AND TO LOOK FOR DEALS...
 			return supabase
 				.from('contacts_deals')
 				.select('*')
-				.eq('id_activity', id_activity_final)
+				// .eq('id_activity', id_activity_final)
 		})
 		.then(r=>{
-			contactsDealsResponses = r;
+			// if(r.error){ console.log('ERROR 9', r.error) }
+			contactsDealsResponses = Array.isArray(r.data) ? r.data : [] ;
 
-			getIdResponses = {
-				activityTempIds,
-				contactTempIds,
-				dealTempIds,
+			const getIdResponses = {
 				id_activity_final,
-				promisesResponses,
-				activitiesResponses,
-				followUpResponses,
+
+				fus4DBTempIds,
+				contacts4DBTempIds,
+				deals4DBTempIds,
+
+				fuResponses,
 				contactResponses,
 				dealResponses,
 				connectionsResponses,
 				activitiesDealsResponses,
 				contactsDealsResponses,
-				contactsDealsResponses,
 			};
 			
 			// UPDATE ALL PERMANENT IDS
-			const updatePromises = formatUpdatePromises(getIdResponses, activityToPut, supabase);
+			const updatePromises = formatUpdatePromises(getIdResponses, contacts4DBTempIdHash, id_agent, supabase);
 	
 			return Promise.all(updatePromises)
-	
-		})
-		.then(()=>{
-			// SELECT THE ACTIVITY (AND SAVE)
-			return supabase
-				.from('activities')
-				.select('*')
-				.eq('id_activity', id_activity_final);
-		})
-		.then(r=>{
-			const { data, error } = r;
-			if(Array.isArray(data)){
-				if(isObjectLiteral(data[0])){
-					theActivity = data[0];
-				}
-			}
-			// SELECT FOLLOW-UP
-			return supabase
-				.from('activities')
-				.select('*')
-				.eq('id_activity_fu', id_activity_final);
-		})
-		.then(r=>{
-			const { data, error } = r;
-			if(Array.isArray(data)){
-				theActivity.fus = data;
-			} else {
-				theActivity.fus = [];
-			}
-			// SELECT CONNECTIONS
-			return supabase
-				.from('connections')
-				.select('*')
-				.eq('id_activity', id_activity_final);
-		})
-		.then(r=>{
-			const { data, error } = r;
-			if(Array.isArray(data)){
-				theActivity.tempPeople = data;
-			} else {
-				theActivity.tempPeople = [];
-			}
-			// SELECT DEAL_ACTIVITY
-			return supabase
-				.from('activities_deals')
-				.select('*')
-				.eq('id_activity', id_activity_final);
-		})
-		.then(r=>{
-			const { data, error } = r;
-			if(Array.isArray(data)){
-				theActivity.tempDeals = data;
-			} else {
-				theActivity.tempDeals = [];
-			}
-			// PREP FOR DEALS & CONTACTS
-			theActivity.tempPeopleIdHash = {};
-			theActivity.tempPeople.forEach(c=>{
-				theActivity.tempPeopleIdHash[`${c.id_contact}`] = true;
-			});
-			theActivity.tempPeopleIds = Object.keys(theActivity.tempPeopleIdHash).map(x=>parseInt(x,10));
-			
-			theActivity.tempDealIdHash = {};
-			theActivity.tempDeals.forEach(c=>{
-				theActivity.tempDealIdHash[`${c.id_deal}`] = true;
-			});
-			theActivity.tempDealIds = Object.keys(theActivity.tempDealIdHash).map(x=>parseInt(x,10));
-			
-			// SELECT CONTACTS
-			return supabase
-				.from('contacts')
-				.select('*')
-				.in('id_contact', theActivity.tempPeopleIds);
-		})
-		.then(r=>{
-			const { data, error } = r;
-			if(Array.isArray(data)){
-				theActivity.tempFullPeopleHash = convertArrayToObject(data, 'id_contact');
-			}
-			// SELECT DEALS
-			return supabase
-				.from('deals')
-				.select('*')
-				.in('id_deal', theActivity.tempDealIds);
-		})
-		.then(r=>{
-			const { data, error } = r;
-			if(Array.isArray(data)){
-				theActivity.tempDealsHash = convertArrayToObject(data, 'id_deal');
-			}
-			// FINALIZE CONTACTS AND CONNECTIONS
-			theActivity.contacts = [];
-			theActivity.connections = [];
-
-			theActivity.tempPeople.forEach(c=>{
-				const foundContact = theActivity.tempFullPeopleHash[`${c.id_contact}`];
-				const fullContact = Object.assign({},c,foundContact);
-				if(fullContact.connection_record_type === 'main'){
-					theActivity.contacts.push(fullContact);
-				} else {
-					theActivity.connections.push(fullContact);
-				}
-			});
-
-			// FINALIZE DEALS
-			theActivity.deals = theActivity.tempDeals.map(d=>{
-				const foundDeal = theActivity.tempDealsHash[`${d.id_deal}`];
-				const fullDeal = Object.assign({},d,foundDeal);
-				return fullDeal;
-			});
-			finalActivity = createFinalActivity(theActivity);
-
-			return res.status(200).json(finalActivity);
-		})
-		.then(()=>{
-			fs.writeFile(`sample-data/activity1-to-put.json`, JSON.stringify(activityToPut,null,2), function (err) {
-				if (err) throw err;
-			});
-			fs.writeFile(`sample-data/activity2-get-ids.json`, JSON.stringify(getIdResponses,null,2), function (err) {
-				if (err) throw err;
-			});
-			fs.writeFile(`sample-data/activity3-fetch-unedited.json`, JSON.stringify(theActivity,null,2), function (err) {
-				if (err) throw err;
-			});
-			fs.writeFile(`sample-data/activity4-fetch.json`, JSON.stringify(finalActivity,null,2), function (err) {
-				if (err) throw err;
-			});
-			return;
+				.then(r=>{
+					// if(Array.isArray(r)){
+					// 	r.forEach(x=>{
+					// 		console.log(x);
+					// 	})
+					// }
+			 		// SELECT THE ACTIVITY (AND SAVE)
+					return getActivityById(id_activity_final, res);
+				})
 		})
 		.catch(err => {
 			console.error(err);

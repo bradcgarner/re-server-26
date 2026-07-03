@@ -2,7 +2,8 @@ const express               = require('express');
 const router                = express.Router();
 const fs = require('fs');
 router.use(express.json());
-const {proformaeFields} = require('./activities-helpers');
+const {getIdAgent,
+	proformaeFields} = require('./activities-helpers');
 
 const { createClient } = require('@supabase/supabase-js');
 const supabaseUrl = process.env.SUPABASE_URL;

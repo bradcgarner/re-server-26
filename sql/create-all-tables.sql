@@ -30,6 +30,7 @@ create table activities (
 	convo_type integer references value_lists(id),
 	convo_voice_note integer references value_lists(id),
 	convo_problem_solve integer references value_lists(id),
+	convo_outcome integer references value_lists(id),
 	convo_notes text,
 	convo_deal_found integer references value_lists(id),
 		

@@ -4,7 +4,14 @@ const {addTime,
 	convertIntegersToTimestamp, isPrimitiveNumber } = require('conjunction-junction');
 const { isObjectLiteral } = require('conjunction-junction/build/basic');
 
-let id_agent = 1;
+const getIdAgent = userContainer => {
+	if(!userContainer){
+		return 0;
+	}
+	const c = userContainer.contents || {};
+	const a = c.agent || {};
+	return a.id_agent || 0;
+};
 
 const agentsFields = {
 	agent_name_first: true,
@@ -19,7 +26,7 @@ const activitiesFields = {
 	id_activity_temp: true,
 	id_agent: true,
 
-	date_convo: true, // object
+	date_convo: false, // object
 	date_convo_year: true,
 	date_convo_month: true,
 	date_convo_day: true,
@@ -125,7 +132,7 @@ const dealsFields = {
 	deal_commission_rate: true,
 	deal_gci: true,
 
-	date_deal: true, // object
+	date_deal: false, // object
 	date_deal_year: true,
 	date_deal_month: true,
 	date_deal_day: true,
@@ -225,249 +232,258 @@ const isAValidId = num => {
 
 // @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
-const formatActivityToPut = activity => {
+const formatActivityPut = (activity, supabase) => {
 	const id_activity_temp = activity.id_activity_temp;
 	const id_activity = activity.id_activity;
 	const id_agent = activity.id_agent;
-	const hasId = !!id_activity;
+	const activityHasId = !!id_activity;
 
-	const newActivity = {};
+	// console.log({activity})
+	const activity4DB = {};
+	const fus4DB = [];
+	const contacts4DB = [];
+	const contacts4DBTempIdHash = {}; 
+	const deals4DB = [];
+	const fus4DBTempIdHash = {};
+	const deals4DBTempIdHash = {};
+
+	// LIMIT FIELDS OF NEW ACTIVITY
 	for(let k in activitiesFields){
 		if(k === 'date_convo'){
 			if(isObjectLiteral(activity[k])){
 				const d = activity[k];
-				newActivity.date_convo_year = d.date_convo_year || null;
-				newActivity.date_convo_month = d.date_convo_month || null;
-				newActivity.date_convo_day = d.date_convo_day || null;
-				newActivity.date_convo_timestamp = d.date_convo_timestamp || null;
+				activity4DB.date_convo_year = d.date_convo_year || null;
+				activity4DB.date_convo_month = isPrimitiveNumber(d.date_convo_month) ? d.date_convo_month : null;
+				activity4DB.date_convo_day = d.date_convo_day || null;
+				activity4DB.date_convo_timestamp = d.date_convo_timestamp || null;
 			}
 		} else if(activity[k] !== null && activity[k] !== undefined && activity[k] !== ''){
-			newActivity[k] = activity[k];
+			activity4DB[k] = activity[k];
 		}
 	}
+	// console.log({activity4DB})
+	// LIMIT KEYS OF FOLLOW-UPS AND PUSH TO ARRAY FOR DATABASE
+	if(Array.isArray(activity.fus)){
+		activity.fus.forEach(f=>{
+			const newF = {};
+			for(let k in activitiesFields){
+				if(k === 'date_fu'){				
+					if(isObjectLiteral(f[k])){
+						const d = f[k];
+						newF.date_fu_year = d.date_fu_year || null;
+						newF.date_fu_month = isPrimitiveNumber(d.date_fu_month) ? d.date_fu_month : null;
+						newF.date_fu_day = d.date_fu_day || null;
+						newF.date_fu_timestamp = d.date_fu_timestamp || null;
+					}
+				} else if(f[k] !== null && f[k] !== undefined && f[k] !== ''){
+					newF[k] = f[k];
+				}
+			}
+			newF.id_agent = id_agent;
+			if(activityHasId){
+				newF.id_activity_fu = id_activity;
+			}
+			fus4DB.push(newF);
+			if(newF.id_activity_temp){
+				fus4DBTempIdHash[newF.id_activity_temp] = true;
+			}
+		});
+	}
 
-	const newActivities = [newActivity];
-	const followUps = Array.isArray(activity.fus) ? activity.fus : [];
-	followUps.forEach(f=>{
-		const newF = {};
-		for(let k in activitiesFields){
-			if(k === 'date_fu'){				
-				if(isObjectLiteral(f[k])){
-					const d = f[k];
-					newF.date_fu_year = d.date_fu_year || null;
-					newF.date_fu_month = d.date_fu_month || null;
-					newF.date_fu_day = d.date_fu_day || null;
-					newF.date_fu_timestamp = d.date_fu_timestamp || null;
+	if(Array.isArray(activity.contacts)){
+		// console.log({contacts})
+		activity.contacts.forEach(c=>{
+			const newC = {};
+			for(let k in contactsFields){
+				if(c[k] !== null && c[k] !== undefined && c[k] !== ''){
+					if(k === 'contact_vp_categories' && typeof c[k] === 'string'){
+						newC[k] = c[k].split(',').map(t=>t.trim());
+					} else {
+						newC[k] = c[k];
+					}
 				}
-			} else if(f[k] !== null && f[k] !== undefined && f[k] !== ''){
-				newF[k] = f[k];
 			}
-		}
-		newF.id_agent = id_agent;
-		if(hasId){
-			newF.id_activity = id_activity;
-		}
-		newActivities.push(newF);
-	});
+			if(!isAValidId(newC.id_contact)){
+				delete newC.id_contact;
+			}
+			newC.id_agent = id_agent;
+			contacts4DB.push(newC);
+			// console.log({newC})
+			contacts4DBTempIdHash[c.id_contact_temp] = {
+				id_contact_temp: c.id_contact_temp,
+				id_connection: c.id_connection || null,
+				connection_record_type: c.connection_record_type || null,
+			};
+		});
+	}
 
-	const newContacts = [];
-	const connectionsHash = {};
-	const contacts = Array.isArray(activity.contacts) ? activity.contacts : [];
-	contacts.forEach(c=>{
-		const newC = {};
-		for(let k in contactsFields){
-			 if(c[k] !== null && c[k] !== undefined && c[k] !== ''){
-				if(k === 'contact_vp_categories' && typeof c[k] === 'string'){
-					newC[k] = c[k].split(',').map(t=>t.trim());
-				} else {
-					newC[k] = c[k];
+	if(Array.isArray(activity.connections)){
+		// console.log({connections})
+		activity.connections.forEach(c=>{
+			const newC = {};
+			for(let k in contactsFields){
+				if(c[k] !== null && c[k] !== undefined && c[k] !== ''){
+					if(k === 'contact_vp_categories' && typeof c[k] === 'string'){
+						newC[k] = c[k].split(',').map(t=>t.trim());
+					} else {
+						newC[k] = c[k];
+					}
 				}
 			}
-		}
-		if(!isAValidId(newC.id_contact)){
-			delete newC.id_contact;
-		}
-		newC.id_agent = id_agent;
-		if(hasId){
-			newC.id_activity = id_activity;
-		}
-		newContacts.push(newC);
-		// @@@@@@@@ Populate connectionsHash
-		connectionsHash[c.id_contact_temp] = {
-			id_contact_temp: c.id_contact_temp,
-			connection_record_type: c.connection_record_type,
-		};
-	});
-	const connections = Array.isArray(activity.connections) ? activity.connections : [];
-	connections.forEach(c=>{
-		const newC = {};
-		for(let k in contactsFields){
-			 if(c[k] !== null && c[k] !== undefined && c[k] !== ''){
-				if(k === 'contact_vp_categories' && typeof c[k] === 'string'){
-					newC[k] = c[k].split(',').map(t=>t.trim());
-				} else {
-					newC[k] = c[k];
-				}
+			if(!isAValidId(newC.id_contact)){
+				delete newC.id_contact;
 			}
-		}
-		if(!isAValidId(newC.id_contact)){
-			delete newC.id_contact;
-		}
-		newC.id_agent = id_agent;
-		if(hasId){
-			newC.id_activity = id_activity;
-		}
-		newContacts.push(newC);
-		// @@@@@@@@ Populate connectionsHash
-		connectionsHash[c.id_contact_temp] = {
-			id_contact_temp: c.id_contact_temp,
-			connection_record_type: c.connection_record_type,
-			connection_vp_reference: c.connection_vp_reference,
-			connection_notes: c.connection_notes,
-			connection_type: c.connection_type,
-		};
-	});
+			newC.id_agent = id_agent;
+			if(activityHasId){
+				newC.id_activity = id_activity;
+			}
+			contacts4DB.push(newC);
+			// console.log({newC})
+			contacts4DBTempIdHash[c.id_contact_temp] = {
+				id_contact_temp: c.id_contact_temp,
+				id_connection: c.id_connection || null,
+				connection_record_type: c.connection_record_type || null,
+				connection_vp_reference: c.connection_vp_reference || null,
+				connection_notes: c.connection_notes || null,
+				connection_type: c.connection_type || null,
+			};
+		});
+	}
 	
-
-	const newDeals = [];
-	const deals = Array.isArray(activity.deals) ? activity.deals : [];
-	deals.forEach(c=>{
-		const newD = {};
-		for(let k in dealsFields){
-			if(k === 'date_deal'){
-				if(isObjectLiteral(c[k])){
-					const d = c[k];
-					newD.date_deal_year = d.date_deal_year || null;
-					newD.date_deal_month = d.date_deal_month || null;
-					newD.date_deal_day = d.date_deal_day || null;
-					newD.date_deal_timestamp = d.date_deal_timestamp || null;
+	if(Array.isArray(activity.deals)){
+		activity.deals.forEach(c=>{
+			const newD = {};
+			for(let k in dealsFields){
+				if(k === 'date_deal'){
+					if(isObjectLiteral(c[k])){
+						const d = c[k];
+						newD.date_deal_year = d.date_deal_year || null;
+						newD.date_deal_month = isPrimitiveNumber(d.date_deal_month) ? d.date_deal_month : null;
+						newD.date_deal_day = d.date_deal_day || null;
+						newD.date_deal_timestamp = d.date_deal_timestamp || null;
+					}
+				} else if(c[k] !== null && c[k] !== undefined && c[k] !== ''){
+					newD[k] = c[k];
 				}
-			} else if(c[k] !== null && c[k] !== undefined && c[k] !== ''){
-				newD[k] = c[k];
 			}
-		}
-		if(!isAValidId(newD.id_deal)){
-			delete newD.id_deal;
-		}
-		newD.id_agent = id_agent;
-		if(hasId){
-			newD.id_activity = id_activity;
-		}
-		newDeals.push(newD);
-	});
-	const newActivityTempIdsHash = {};
-	const newContactTempIdsHash = {};
-	const newDealTempIdsHash = {};
-	newActivities.forEach(a=>{
-		if(a.id_activity_temp && a.id_activity_temp !== id_activity_temp){
-			newActivityTempIdsHash[a.id_activity_temp] = true;
-		}
-	});
-	newContacts.forEach(c=>{
-		if(c.id_contact_temp){
-			newContactTempIdsHash[c.id_contact_temp] = true;
-		}
-	});
-	newDeals.forEach(d=>{
-		if(d.id_deal_temp){
-			newDealTempIdsHash[d.id_deal_temp] = true;
-		}
-	});
+			if(!isAValidId(newD.id_deal)){
+				delete newD.id_deal;
+			}
+			newD.id_agent = id_agent;
+			deals4DB.push(newD);
+			if(newD.id_deal_temp){
+				deals4DBTempIdHash[newD.id_deal_temp] = true;
+			}
+		});
+	}
 
-	return {
-		newActivities,
-		newContacts,
-		newDeals,
-		id_activity_temp,
-		id_activity,
-		connectionsHash,
-		newActivityTempIdsHash,
-		newContactTempIdsHash,
-		newDealTempIdsHash,
-	};
+	// @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
-};
-
-// @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-
-const formatInsertPromises = (activityToPut, supabase) => {
-	const newActivities = Array.isArray(activityToPut.newActivities) ? activityToPut.newActivities : [];
-	const newContacts = Array.isArray(activityToPut.newContacts) ? activityToPut.newContacts : [];
-	const newDeals = Array.isArray(activityToPut.newDeals) ? activityToPut.newDeals : [];
-
-	const activityPromises = newActivities.map(x=>{
-		if(x.id_activity){
+	const activityPromises = [activity4DB, ...fus4DB].map(x=>{
+		const id_activity = x.id_activity;
+		delete x.id_activity;
+		if(id_activity){
 			return new Promise(resolve=>{
 				resolve(
 					supabase
 					.from('activities')
 					.update(x)
-					.eq('id_activity', x.id_activity)
+					.eq('id_activity', id_activity)
+				);
+			});
+		} else {
+			return new Promise(resolve=>{
+				resolve(
+					supabase
+					.from('activities')
+					.insert(x)
 				);
 			});
 		}
-		return new Promise(resolve=>{
-			resolve(
-				supabase
-				.from('activities')
-				.insert(x)
-			);
-		});
 	});
 
-	const contactPromises = newContacts.map(x=>{
-		if(x.id_contact){
+	const contactPromises = contacts4DB.map(x=>{
+		const id_contact = x.id_contact;
+		delete x.id_contact;
+		if(id_contact){
+			// console.log('update',cForDb)
 			return new Promise(resolve=>{
 				resolve(
 					supabase
 					.from('contacts')
 					.update(x)
-					.eq('id_contact', x.id_contact)
+					.eq('id_contact', id_contact)
+				);
+			});
+		} else {
+			// console.log('insert',cForDb)
+			return new Promise(resolve=>{
+				resolve(
+					supabase
+					.from('contacts')
+					.insert(x)
 				);
 			});
 		}
-		return new Promise(resolve=>{
-			resolve(
-				supabase
-				.from('contacts')
-				.insert(x)
-			);
-		});
 	});
 
-	const dealPromises = newDeals.map(x=>{
-		if(x.id_deal){
+	const dealPromises = deals4DB.map(x=>{
+		const id_deal = x.id_deal;
+		delete x.id_deal;
+		// console.log({id_deal, dForDb});
+		if(id_deal){
+			// console.log('update',dForDb)
 			return new Promise(resolve=>{
 				resolve(
 					supabase
 					.from('deals')
 					.update(x)
-					.eq('id_deal', x.id_deal)
+					.eq('id_deal', id_deal)
+				);
+			});
+		} else {
+			// console.log('insert',dForDb)
+			return new Promise(resolve=>{
+				resolve(
+					supabase
+					.from('deals')
+					.insert(x)
 				);
 			});
 		}
-		return new Promise(resolve=>{
-			resolve(
-				supabase
-				.from('deals')
-				.insert(x)
-			);
-		});
 	});
 
-	return [
-		...activityPromises, 
-		...contactPromises,
-		...dealPromises];
+	const fus4DBTempIds = Object.keys(fus4DBTempIdHash);
+	const contacts4DBTempIds = Object.keys(contacts4DBTempIdHash);
+  const deals4DBTempIds = Object.keys(deals4DBTempIdHash);
+
+	return {
+		fus4DBTempIds,
+		contacts4DBTempIdHash,
+		contacts4DBTempIds,
+		deals4DBTempIds,
+		id_activity_temp,
+		id_activity,
+		insertionPromises: [
+			...activityPromises, 
+			...contactPromises,
+			...dealPromises
+		],
+	};
 };
 
 // @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
-const formatUpdatePromises = (getIdResponses, sampleToPut, supabase) => {
+const formatUpdatePromises = (getIdResponses, contacts4DBTempIdHash, id_agent, supabase) => {
 
 	const {
 		id_activity_final,
-		followUpResponses,
+
+		fus4DBTempIds,
+		contacts4DBTempIds,
+		deals4DBTempIds,
+
+		fuResponses,
 		contactResponses,
 		dealResponses,
 		connectionsResponses,
@@ -475,61 +491,62 @@ const formatUpdatePromises = (getIdResponses, sampleToPut, supabase) => {
 		contactsDealsResponses,
 	} = getIdResponses;
 
-	const followUpResponsesArr        = Array.isArray(followUpResponses.data)        ? followUpResponses.data        : [];
-	const contactResponsesArr         = Array.isArray(contactResponses.data)         ? contactResponses.data         : [];
-	const dealResponsesArr            = Array.isArray(dealResponses.data)            ? dealResponses.data            : [];
-	const connnectionsResponsesArr    = Array.isArray(connectionsResponses.data)     ? connectionsResponses.data     : [];
-	const activitiesDealsResponsesArr = Array.isArray(activitiesDealsResponses.data) ? activitiesDealsResponses.data : [];
-	const contactsDealsResponsesArr   = Array.isArray(contactsDealsResponses.data)   ? contactsDealsResponses.data : [];
 	
 	// hash of all id_contacts that already have a connection (don't duplicate)
 	const connectionsResponsesHash = {}
-	connnectionsResponsesArr.forEach(c=>{
+	connectionsResponses.forEach(c=>{
 		connectionsResponsesHash[`${c.id_contact}`] = true;
 	});
 
+	// console.log({connnectionsResponses, connectionsResponsesHash})
+
 	// hash of all id_deals that already have a activities_deals (don't duplicate)
 	const activitiesDealsResponsesHash = {}
-	connnectionsResponsesArr.forEach(c=>{
+	activitiesDealsResponses.forEach(c=>{
 		activitiesDealsResponsesHash[`${c.id_deal}`] = true;
 	});
+	// console.log({activitiesDealsResponsesHash,activitiesDealsResponsesHash});
 
 	// hash of all contacts_deals that already have a contacts_deals (don't duplicate)
 	const contactsDealsResponsesHash = {}
-	contactsDealsResponsesArr.forEach(c=>{
+	contactsDealsResponses.forEach(c=>{
 		contactsDealsResponsesHash[`${c.id_contact}`] = c.id_deal;
 	});
 
 	const updatePromises = [];
 
 	// @@@@@@@@ LINK FOLLOW-UPS TO ORIGINATING ACTIVITY @@@@@@@@@	
-	followUpResponsesArr.forEach(x=>{
+	// fuResponses = {id_activity, id_activity_temp} where id_activity_temp in fus4DBTempIds
+	// ie fuRespones = ids of fus (only fus, not main activity)
+	fuResponses.forEach(x=>{
 		updatePromises.push(new Promise(resolve=>{
 			resolve(
 				supabase
 				.from('activities')
-				.update({id_activity_fu: id_activity_final})
-				.eq('id_activity', x.id_activity)
+				.update({id_activity_fu:   id_activity_final})
+				.eq(    'id_activity_temp', x.id_activity_temp)
 				)
 			})
 		);
 	});
 
-	contactResponsesArr.forEach(x=>{
+	// contactResponses = {id_contact, id_contact_temp} where id_contact_temp in contacts4DBTempIds
+	// ie contactResponses = ids of ALL contacts associated with this activity (main or connections)	
+	contactResponses.forEach(x=>{
 		// @@@@@@@@ LINK FOLLOW-UPS TO CONTACTS @@@@@@@@@	
 		updatePromises.push(new Promise(resolve=>{
 			resolve(
 				supabase
 				.from('activities')
-				.update({id_contact_fu: x.id_contact})
-				.eq('id_contact_fu_temp', x.id_contact_temp)
+				.update({id_contact_fu:       x.id_contact})
+				.eq(    'id_contact_fu_temp', x.id_contact_temp)
 				)
 			})
 		);
 		// @@@@@@@@ CREATE CONNECTIONS @@@@@@@@@	
-		if(!connectionsResponsesHash[`$[x.id_contact]`]){
-			const connectionsHash = sampleToPut.connectionsHash || {};
-			const thisConnection = connectionsHash[x.id_contact_temp] || {};
+		// if no existing connection is in DB
+		if(!connectionsResponsesHash[`${x.id_contact}`]){
+			const thisConnection = contacts4DBTempIdHash[x.id_contact_temp] || {};
 			const connection = {
 				id_activity: id_activity_final,
 				id_contact: x.id_contact,
@@ -550,14 +567,16 @@ const formatUpdatePromises = (getIdResponses, sampleToPut, supabase) => {
 		}
 	});
 
-	dealResponsesArr.forEach(x=>{
+	// dealResponses={id_deal, id_deal_temp} where id_deal_temp in deals4DBTempIds
+	// ie dealResponses =  
+	dealResponses.forEach(x=>{
 		// @@@@@@@@ LINK FOLLOW-UPS TO DEALS @@@@@@@@@	
 		updatePromises.push(new Promise(resolve=>{
 			resolve(
 				supabase
 				.from('activities')
-				.update({id_deal_fu: x.id_deal})
-				.eq('id_deal_fu_temp', x.id_deal_temp)
+				.update({id_deal_fu:       x.id_deal})
+				.eq(    'id_deal_fu_temp', x.id_deal_temp)
 				)
 			})
 		);
@@ -579,7 +598,7 @@ const formatUpdatePromises = (getIdResponses, sampleToPut, supabase) => {
 		}
 		// @@@@@@@@ CREATE CONTACTS_DEALS @@@@@@@@@	
 
-		contactResponsesArr.forEach(c=>{
+		contactResponses.forEach(c=>{
 			const contactsDealExists = contactsDealsResponsesHash[`${c.id_contact}`] === x.id_deal;
 			const isMain = typeof c.id_contact_temp === 'string' && c.id_contact_temp.includes('main');
 			if(isMain && !contactsDealsFields){
@@ -682,8 +701,8 @@ const createFinalActivity = theActivity => {
 
 // @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 module.exports = {
-	formatActivityToPut,
-	formatInsertPromises,
+	getIdAgent,
+	formatActivityPut,
 	formatUpdatePromises,
 	createFinalActivity,
 	agentsFields,

@@ -2,7 +2,7 @@ const express               = require('express');
 const router                = express.Router();
 const fs = require('fs');
 router.use(express.json());
-
+const {getIdAgent} = require('./activities-helpers');
 const { 
 	convertArrayToObject,
 	hexToRgb } = require('conjunction-junction');
@@ -55,8 +55,8 @@ router.get('/get-lists', (req, res)=>{
 	let coreValuesHash = {};
 	let coreValues = [];
 
-	let id_agent = 1;
-
+	const id_agent = getIdAgent(userContainer);
+	
 	return new Promise(resolve => {
 		resolve();
 	})
@@ -66,6 +66,7 @@ router.get('/get-lists', (req, res)=>{
 			.from('contacts')
 			.select('*')
 			.eq('id_agent', id_agent)
+			.order('contact_name_first','contact_name_last')
 	})
 	.then(r=>{
 		contacts = Array.isArray(r.data) ? r.data : [];
@@ -121,7 +122,7 @@ router.get('/get-lists', (req, res)=>{
 	})
 });
 
-router.get('/core-values', (req, res)=>{
+router.get('/core-values/:id_agent', (req, res)=>{
 
 	let contacts = [];
 	let contactsHash = {};
@@ -130,7 +131,7 @@ router.get('/core-values', (req, res)=>{
 	let coreValuesHash = {};
 	let coreValues = [];
 
-	let id_agent = 1;
+	const id_agent = req.params.id_agent;
 
 	return new Promise(resolve => {
 		resolve();

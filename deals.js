@@ -2,7 +2,8 @@ const express               = require('express');
 const router                = express.Router();
 const fs = require('fs');
 router.use(express.json());
-const {dealsFields} = require('./activities-helpers');
+const {getIdAgent,
+	dealsFields} = require('./activities-helpers');
 
 const { createClient } = require('@supabase/supabase-js');
 const supabaseUrl = process.env.SUPABASE_URL;
@@ -13,13 +14,12 @@ const { jwtStrategy } = require('./auth');
 const userContainer = {};
 router.use((req, res, next)=>jwtStrategy(req, res, next, userContainer));
 
-let id_agent = 1;
-
 router.get('/:id_deal', (req, res)=>{
 	const id_deal = req.params.id_deal;
 	if(!id_deal) throw { message: 'invalid id_deal' };
 
 	let deal = {};
+	const id_agent = getIdAgent(userContainer);
 
 	return new Promise(resolve => {
 		resolve();
@@ -113,6 +113,7 @@ router.get('/:id_deal', (req, res)=>{
 });
 
 router.get('/', (req, res)=>{
+	const id_agent = getIdAgent(userContainer);
 
 	return new Promise(resolve => {
 		resolve();
@@ -120,15 +121,7 @@ router.get('/', (req, res)=>{
 	.then(()=>{
 		return supabase
 			.from('deals')
-			.select(`id_deal,
-				date_deal_timestamp,
-				id_agent,
-				deal_name,
-				deal_address,
-				deal_value,
-				deal_value_status,
-				deal_commission_rate,
-				deal_gci,
+			.select(`*,
 				contacts_deals (
 					id_contact
 				)`)

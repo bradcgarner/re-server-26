@@ -15,6 +15,7 @@ const JWT_EXPIRY = process.env.JWT_EXPIRY;
 const { createClient } = require('@supabase/supabase-js');
 const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseKey = process.env.SUPABASE_SECRET_KEY;
+
 const supabase = createClient(supabaseUrl, supabaseKey);
 
 router.use(express.json());
@@ -61,7 +62,7 @@ const routesAllowed = {
   GET: {
     agent: { // most basic agent_permissions
       '//api/general/get-lists': true,
-      '//api/general/core-values': true,
+      '//api/general/core-values/*': true,
 			'//api/activities/follow-ups': true,
 			'//api/activities//': true,
 			'//api/activities/*': true,
@@ -87,7 +88,7 @@ const routesAllowed = {
   },
   PUT: {
     agent: {
-			'//api/activities': true,
+			'//api/activities//': true,
 			'//api/contacts': true,
 			'//api/daily-plans': true,
 			'//api/deals': true,
@@ -126,26 +127,26 @@ const jwtStrategy = (req, res, next, userContainer={})=>{
   // see next() at the end, which calls the calling function if this passes
   // step 1: check header or url parameters or post parameters for token
   var tokenWithBearer = req.headers.authorization;
-	console.log(req.headers)
-	console.log({tokenWithBearer})
+	// console.log(req.headers)
+	// console.log({tokenWithBearer})
   if(!tokenWithBearer){
     res.status(403).json({
       message:'No Token'
     });
   } else {
     const token = tokenWithBearer.slice(7,tokenWithBearer.length);
-    console.log({token})
+    // console.log({token})
 
     // Decode the token
     jwt.verify(token,JWT_SECRET,(err,decod)=>{
-      console.log('err', err, 'decod', decod);
+      // console.log('err', err, 'decod', decod);
 
       if(err){
         res.status(403).json({message:'Wrong Token'});
       } else {
         //If decoded then call next() so that respective route is called.
         req.decoded = decod;
-        console.log(decod)
+        // console.log(decod)
         // we must APPEND userContainer
         // trying to replace it does not work
         userContainer.contents = req.decoded;
@@ -177,21 +178,21 @@ const jwtStrategy = (req, res, next, userContainer={})=>{
             });
 
             const url = urlArrayAdjusted.join('/');
-            console.log(url)
+            // console.log(url)
             const allowedPermission = userContainer.contents.agent.agent_permissions.find(p=>{
-              console.log('p',p, 'routesAllowed[req.method][p]',routesAllowed[req.method][p])
+              // console.log('p',p, 'routesAllowed[req.method][p]',routesAllowed[req.method][p])
               if(routesAllowed[req.method][p] &&
                 routesAllowed[req.method][p][url]){
                 return true;
               }
             });
-            console.log(allowedPermission)
+            // console.log({allowedPermission})
             if(!allowedPermission) {
               res.status(403).json({
                 message:`Sorry, ${req.method} access to ${req.originalUrl} not granted to you, ${req.decoded.agent.username}, agent_permissions: ${userContainer.contents.agent.agent_permissions}`
               });
             } else {
-              console.log('ALLOWED', userContainer.contents.agent, req.method, req.originalUrl)
+              // console.log('ALLOWED', userContainer.contents.agent, req.method, req.originalUrl)
               next();
             }
           } // end if expired / else if no routes found / else check allowedPath
@@ -211,7 +212,7 @@ router.post('/pw-reset', (req, res) => {
   if(!agent_email || typeof agent_email !== 'string') {
     return res.status(400).json({message: 'invalid email'});
   }
-	console.log({agent_email})
+	// console.log({agent_email})
 
 
   return new Promise(resolve => {
@@ -225,9 +226,9 @@ router.post('/pw-reset', (req, res) => {
   })
   .then( r => { 
 		const { data, error } = r;
-		console.log({data})
+		// console.log({data})
 		const agent = Array.isArray(data) ? data[0] : {};
-		console.log({agent})
+		// console.log({agent})
     id_agent = agent.id_agent;
 
     if(!id_agent){
@@ -254,14 +255,14 @@ router.post('/pw-reset', (req, res) => {
 				.select()
     })
     .then(r => { 
-			console.log(r)
+			// console.log(r)
 			const { data, error } = r;
-			console.log({data});
+			// console.log({data});
 			const agent = Array.isArray(data) ? data[0] : {};
-			console.log({agent});
+			// console.log({agent});
    
       // sendPwReset(agent, tempPw);
-      console.log({tempPw})
+      // console.log({tempPw})
       const responseObject = {
         error: false,
         message: `We sent the username and temporary password to ${agent.agent_email}. Use those credentials to log in above, then reset your password.`
@@ -300,15 +301,15 @@ router.post('/login', (req, res) => {
         .eq('agent_email', agent_email)
     })
     .then(r => {
-			console.log(r)
+			// console.log(r)
 			const { data, error } = r;
-			console.log({data});
+			// console.log({data});
 			agent = Array.isArray(data) ? data[0] : {};
-			console.log({agent});
+			// console.log({agent});
       return validatePassword(userFromClient.agent_password, agent.agent_password);
     })
     .then( isValid => {
-			console.log({isValid})
+			// console.log({isValid})
       if(!agent){
         return; // already responded
       }
@@ -334,7 +335,7 @@ router.post('/login', (req, res) => {
       }
       })
       .catch(err => {
-        console.error(err);
+        // console.error(err);
         return res.status(500).json(err);
       });
   }
@@ -353,7 +354,7 @@ router.post('/relogin', (req, res) => {
   return new Promise(resolve=>{
     resolve(
       jwt.verify(authToken,JWT_SECRET,(err,decod)=>{
-				console.log({decod});
+				// console.log({decod});
         if(!err && decod.agent && isPrimitiveNumber(decod.agent.id_agent)){
           id_agent = decod.agent.id_agent;
         }
@@ -370,11 +371,11 @@ router.post('/relogin', (req, res) => {
       .eq('id_agent', id_agent)
     })
     .then(r => {
-			console.log(r)
+			// console.log(r)
 			const { data, error } = r;
-			console.log({data});
+			// console.log({data});
 			agent = Array.isArray(data) ? data[0] : {};
-			console.log({agent});
+			// console.log({agent});
 
       if(!agent){
         throw {message: 'user not found'};

@@ -2,7 +2,8 @@ const express               = require('express');
 const router                = express.Router();
 const fs = require('fs');
 router.use(express.json());
-const {contactsFields} = require('./activities-helpers');
+const {getIdAgent,
+	contactsFields} = require('./activities-helpers');
 
 const { createClient } = require('@supabase/supabase-js');
 const supabaseUrl = process.env.SUPABASE_URL;
@@ -13,9 +14,9 @@ const { jwtStrategy } = require('./auth');
 const userContainer = {};
 router.use((req, res, next)=>jwtStrategy(req, res, next, userContainer));
 
-const id_agent = 1;
 
 router.get('/:id_contact', (req, res)=>{
+	const id_agent = getIdAgent(userContainer);
 	const id_contact = req.params.id_contact;
 	console.log('id_contact',id_contact)
 	if(!id_contact) throw { message: 'invalid id_contact' };
@@ -107,6 +108,7 @@ router.get('/:id_contact', (req, res)=>{
 });
 
 router.get('/', (req, res)=>{
+	const id_agent = getIdAgent(userContainer);
 
 	return new Promise(resolve => {
 		resolve();
