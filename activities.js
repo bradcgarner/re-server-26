@@ -309,7 +309,7 @@ router.put('/', (req, res)=>{
 					id_activity_final = r.data[0].id_activity;
 				}
 			}
-			console.log({id_activity_final})
+			// console.log({id_activity_final})
 
 			// @@@@@@ GET ID OF FOLLOW-UPS JUST INSERTED @@@@@@@@
 			return supabase
