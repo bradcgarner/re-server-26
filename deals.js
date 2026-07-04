@@ -14,12 +14,9 @@ const { jwtStrategy } = require('./auth');
 const userContainer = {};
 router.use((req, res, next)=>jwtStrategy(req, res, next, userContainer));
 
-router.get('/:id_deal', (req, res)=>{
-	const id_deal = req.params.id_deal;
-	if(!id_deal) throw { message: 'invalid id_deal' };
-
-	let deal = {};
+const getDealById = (id_deal, res) => {
 	const id_agent = getIdAgent(userContainer);
+	let deal = {};
 
 	return new Promise(resolve => {
 		resolve();
@@ -110,6 +107,13 @@ router.get('/:id_deal', (req, res)=>{
 		console.error(err);
 		return res.status(500).json(err);
 	})
+};
+
+router.get('/:id_deal', (req, res)=>{
+	const id_deal = req.params.id_deal;
+	if(!id_deal) throw { message: 'invalid id_deal' };
+
+	return getDealById(id_deal, res);
 });
 
 router.get('/', (req, res)=>{
@@ -159,7 +163,9 @@ router.put('/', (req, res)=>{
 
 	const dealForDb = {};
 	for(let f in dealsFields){
-		dealForDb[f] = deal[f];
+		if(dealsFields[f]){
+			dealForDb[f] = deal[f];
+		}
 	}
 
 	if(!id_deal){
@@ -191,12 +197,11 @@ router.put('/', (req, res)=>{
 			.from('deals')
 			.update(dealForDb)
 			.eq('id_deal',id_deal)
-			.select()
 	})
 	.then(r=>{
 		const { data, error } = r;
-		const newD = Array.isArray(data) ? data[0] : {} ;
-		return res.status(200).json(newD);
+		// console.log(data, error)
+		return getDealById(id_deal, res);
 	})
 	.catch(err => {
 		console.error(err);

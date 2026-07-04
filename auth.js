@@ -91,7 +91,7 @@ const routesAllowed = {
 			'//api/activities//': true,
 			'//api/contacts': true,
 			'//api/daily-plans': true,
-			'//api/deals': true,
+			'//api/deals//': true,
 			'//api/proformae': true,
     },
 		admin: {
@@ -188,8 +188,9 @@ const jwtStrategy = (req, res, next, userContainer={})=>{
             });
             // console.log({allowedPermission})
             if(!allowedPermission) {
+                console.log(`Sorry, ${req.method} access to ${req.originalUrl} not granted to you, ${req.decoded.agent.agent_name_first}, agent_permissions: ${userContainer.contents.agent.agent_permissions}`);
               res.status(403).json({
-                message:`Sorry, ${req.method} access to ${req.originalUrl} not granted to you, ${req.decoded.agent.username}, agent_permissions: ${userContainer.contents.agent.agent_permissions}`
+                message:`Sorry, ${req.method} access to ${req.originalUrl} not granted to you, ${req.decoded.agent.agent_name_first}, agent_permissions: ${userContainer.contents.agent.agent_permissions}`
               });
             } else {
               // console.log('ALLOWED', userContainer.contents.agent, req.method, req.originalUrl)
