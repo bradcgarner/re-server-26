@@ -44,7 +44,8 @@ const activitiesFields = {
   convo_problem_solve: true,
   convo_notes: true,
   convo_deal_found: true,
-
+	convo_outcome: true,
+	
 	date_fu: true,
 	date_fu_year: true,
 	date_fu_month: true,
