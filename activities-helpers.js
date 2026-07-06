@@ -175,6 +175,7 @@ const dailyPlansFields = {
 	dp_fu_review: true,
 	dp_calendar: true,
 	dp_yesterday_status: true,
+	dp_mindset: true,
 	dp_yesterday_notes: true,
 	dp_convo_goal: true,
 	dp_vp_seeking: true,
