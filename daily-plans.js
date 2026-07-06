@@ -20,7 +20,8 @@ router.get('/:id_dp', (req, res)=>{
 	const id_agent = getIdAgent(userContainer);
 	const id_dp = req.params.id_dp;
 	if(!id_dp) throw { message: 'invalid id_dp' };
-
+	let dp = {};
+	
 	return new Promise(resolve => {
 		resolve();
 	})
@@ -33,7 +34,7 @@ router.get('/:id_dp', (req, res)=>{
 	})
 	.then(r=>{
 		const { data, error } = r;
-		const dp = Array.isArray(data) ? data[0] : {};
+		dp = Array.isArray(data) ? data[0] : {};
 		dp.date_dp = {
 			date_dp_year: dp.date_dp_year,
 			date_dp_month: dp.date_dp_month,
@@ -54,6 +55,7 @@ router.get('/:id_dp', (req, res)=>{
 
 router.get('/', (req, res)=>{
 	const id_agent = getIdAgent(userContainer);
+	let dailyPlans = [];
 
 	return new Promise(resolve => {
 		resolve();
@@ -67,10 +69,22 @@ router.get('/', (req, res)=>{
 	})
 	.then(r=>{
 		const { data, error } = r;
-		if(Array.isArray(data)){
-			return res.status(200).json(data);
-		}
-		return res.status(204).json([]);
+		dailyPlans = Array.isArray(data) ? data : [];
+
+		return supabase
+			.from('core_values')
+			.select(`*`)
+			.eq('id_agent', id_agent)
+			.order('sort_order')
+	})	
+	.then(r=>{
+		const { data, error } = r;
+		coreValues = Array.isArray(data) ? data : [];
+
+		return res.status(200).json({
+			dailyPlans, 
+			coreValues
+		});
 	})
 	.catch(err => {
 		console.error(err);

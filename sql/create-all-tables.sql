@@ -199,6 +199,9 @@ create table proformae (
 	pf_gci_year float,
 	pf_fees_year float,
 	pf_fees_unit float,
+	pf_team_pct float,
+	pf_team_cap float,
+	pf_broker_pct float,
 	pf_broker_cap float,
 	pf_expenses_year float,
 	pf_cost_year float,
@@ -206,6 +209,7 @@ create table proformae (
 	pf_tax_rate float,
 	pf_income_year float,
 	pf_income_month float,
+	pf_income_gci_pct float,
 
 	pf_close_pct float,
 	pf_units_year_rev float,
@@ -225,3 +229,14 @@ create table proformae (
 	pf_deals_week float,
 	pf_deals_month float
 );
+
+create table value_lists (
+	id serial primary key,
+	timestamp_created timestamp with time zone default current_timestamp,
+	label text,
+	list text,
+	color text,
+	value float,
+	category text,
+	sort_order float
+;)

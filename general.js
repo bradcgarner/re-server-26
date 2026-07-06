@@ -48,6 +48,7 @@ const formatLists = data => {
 
 router.get('/get-lists', (req, res)=>{
 
+	let proformae = {};
 	let contacts = [];
 	let contactsHash = {};
 	let deals = [];
@@ -61,6 +62,15 @@ router.get('/get-lists', (req, res)=>{
 		resolve();
 	})
 	.then(()=>{
+		// GET PROFORMAE
+		return supabase
+			.from('proformae')
+			.select('*')
+			.eq('id_agent', id_agent)
+	})
+	.then(r=>{
+		proformae = Array.isArray(r.data) && r.data[0] ? r.data[0] : {};
+
 		// GET CONTACTS
 		return supabase
 			.from('contacts')
@@ -112,7 +122,13 @@ router.get('/get-lists', (req, res)=>{
 			valueListHash['core value'] = coreValues.map(v=>{
 				return {id: v.id_cv, label: v.cv_label};
 			});
-			return res.status(200).json({valueListHash, fullHash, contactsHash, dealsHash, coreValuesHash});
+			return res.status(200).json({
+				proformae,
+				valueListHash,
+				fullHash, 
+				contactsHash, 
+				dealsHash, 
+				coreValuesHash});
 		}
 		return res.status(204).json({});
 	})
