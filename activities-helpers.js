@@ -45,7 +45,7 @@ const activitiesFields = {
   convo_notes: true,
   convo_deal_found: true,
 	convo_outcome: true,
-	
+
 	date_fu: true,
 	date_fu_year: true,
 	date_fu_month: true,
@@ -381,6 +381,7 @@ const formatActivityPut = (activity, supabase) => {
 	// @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
 	const activityPromises = [activity4DB, ...fus4DB].map(x=>{
+		// console.log('convo_outcome',x.convo_outcome)
 		const id_activity = x.id_activity;
 		delete x.id_activity;
 		if(id_activity){

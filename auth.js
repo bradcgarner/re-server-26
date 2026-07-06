@@ -71,6 +71,7 @@ const routesAllowed = {
 			'//api/daily-plans//': true,
 			'//api/daily-plans/*': true,
 			'//api/deals//': true,
+			'//api/deals/income': true,
 			'//api/deals/*': true,
 			'//api/proformae/*': true,
     },
