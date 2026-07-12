@@ -15,13 +15,10 @@ const { jwtStrategy } = require('./auth');
 const userContainer = {};
 router.use((req, res, next)=>jwtStrategy(req, res, next, userContainer));
 
-
-router.get('/:id_dp', (req, res)=>{
+const getDailyPlanById = (id_dp, res) => {
 	const id_agent = getIdAgent(userContainer);
-	const id_dp = req.params.id_dp;
-	if(!id_dp) throw { message: 'invalid id_dp' };
 	let dp = {};
-	
+
 	return new Promise(resolve => {
 		resolve();
 	})
@@ -51,6 +48,13 @@ router.get('/:id_dp', (req, res)=>{
 		console.error(err);
 		return res.status(500).json(err);
 	})
+}
+
+router.get('/:id_dp', (req, res)=>{
+	const id_dp = req.params.id_dp;
+	if(!id_dp) throw { message: 'invalid id_dp' };
+	
+	return getDailyPlanById(id_dp, res);
 });
 
 router.get('/', (req, res)=>{
@@ -140,12 +144,9 @@ router.put('/', (req, res)=>{
 			.from('daily_plans')
 			.update(dpForDb)
 			.eq('id_dp',id_dp)
-			.select()
 	})
 	.then(r=>{
-		const { data, error } = r;
-		const newDP = Array.isArray(data) ? data[0] : {} ;
-		return res.status(200).json(newDP);
+		return getDailyPlanById(id_dp, res);
 	})
 	.catch(err => {
 		console.error(err);

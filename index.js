@@ -47,6 +47,7 @@ function runServer(port=PORT) {
 			});
   })
 	.then(()=>{
+		const { router: openRouter} = require('./open');
 		const { router: authRouter} = require('./auth');
 		const { router: generalRouter} = require('./general');
 		const { router: activitiesRouter} = require('./activities');
@@ -55,6 +56,7 @@ function runServer(port=PORT) {
 		const { router: proformaeRouter} = require('./proformae');
 		const { router: dailyPlansRouter} = require('./daily-plans');
 
+		app.use('/api/open', openRouter);
 		app.use('/api/auth', authRouter);
 		app.use('/api/general', generalRouter);
 		app.use('/api/activities', activitiesRouter);

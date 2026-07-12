@@ -26,7 +26,6 @@ create table activities (
 	convo_tone integer references value_lists(id),
 	convo_model integer references value_lists(id),
 	convo_intentional integer references value_lists(id),
-	convo_intentional_binary integer references value_lists(id),
 	convo_type integer references value_lists(id),
 	convo_voice_note integer references value_lists(id),
 	convo_problem_solve integer references value_lists(id),
@@ -74,7 +73,7 @@ create table contacts (
 	id_contact_temp text,
 	id_who_introduced integer references contacts(id_contact),
 
-	contact_vp_status integer references value_lists(id),
+	contact_vp_status integer,
 	contact_how_met integer references value_lists(id),
 	contact_where_met integer references value_lists(id),
 	contact_where_met_notes text,
@@ -93,7 +92,34 @@ create table contacts (
 	contact_address_zip text,
 	contact_birth_month integer,
 	contact_birth_day integer,
-	contact_birth_year integer
+	contact_birth_year integer,
+
+	contact_url text,
+
+	id_vp_app integer references vp_app(id_vp_app)
+);
+
+create table vp_app (
+	id_vp_app serial primary key,
+	timestamp_created timestamp with time zone default current_timestamp,
+	id_agent integer references agents(id_agent),
+	id_contact integer references contacts(id_contact),
+	vp_temp_id text,
+	vp_app_status integer,
+
+	vp_type text,
+	vp_name_business text,
+	vp_phone text,
+	vp_email text,
+	vp_url text,
+	vp_area text,
+	vp_contact_person text,
+	vp_review_url text,
+	vp_agree text,
+	vp_ref1 text,
+	vp_ref2 text,
+	vp_ref3 text
+
 );
 
 create table contacts_deals (
@@ -177,6 +203,7 @@ create table daily_plans (
 	dp_fu_review integer references value_lists(id),
 	dp_calendar integer references value_lists(id),
 	dp_yesterday_status integer references value_lists(id),
+	dp_mindset integer references value_lists(id),
 	dp_yesterday_notes text
 
 	dp_convo_goal integer,

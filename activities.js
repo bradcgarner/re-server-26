@@ -309,7 +309,6 @@ router.put('/', (req, res)=>{
 					id_activity_final = r.data[0].id_activity;
 				}
 			}
-			// console.log({id_activity_final})
 
 			// @@@@@@ GET ID OF FOLLOW-UPS JUST INSERTED @@@@@@@@
 			return supabase
@@ -328,7 +327,7 @@ router.put('/', (req, res)=>{
 				.in('id_contact_temp', contacts4DBTempIds)
 		})
 		.then(r=>{
-			if(r.error){ console.log('ERROR 5', r.error) }
+			// if(r.error){ console.log('ERROR 5', r.error) }
 			contactResponses = Array.isArray(r.data) ? r.data : [] ;
 
 		// @@@@@@ GET ID OF DEALS JUST INSERTED @@@@@@@@
@@ -338,7 +337,7 @@ router.put('/', (req, res)=>{
 				.in('id_deal_temp', deals4DBTempIds)
 		})
 		.then(r=>{
-			if(r.error){ console.log('ERROR 6', r.error) }
+			// if(r.error){ console.log('ERROR 6', r.error) }
 			dealResponses = Array.isArray(r.data) ? r.data : [] ;
 
 			// @@@@@@ GET ID OF CONNECTIONS THIS ACTIVITY  @@@@@@@@

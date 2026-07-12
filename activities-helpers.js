@@ -1,8 +1,10 @@
 'use strict';
 
 const {addTime,
-	convertIntegersToTimestamp, isPrimitiveNumber } = require('conjunction-junction');
-const { isObjectLiteral } = require('conjunction-junction/build/basic');
+	convertIntegersToTimestamp, 
+	isPrimitiveNumber,
+	isObjectLiteral,
+	hexToRgb } = require('conjunction-junction');
 
 const getIdAgent = userContainer => {
 	if(!userContainer){
@@ -38,7 +40,6 @@ const activitiesFields = {
   convo_tone: true,
   convo_model: true,
   convo_intentional: true,
-  convo_intentional_binary: true,
   convo_type: true,
   convo_voice_note: true,
   convo_problem_solve: true,
@@ -81,6 +82,7 @@ const contactsFields = {
 	id_agent: true,
 	id_contact_temp: true,
 	id_who_introduced: true,
+	id_vp_app: true,
 
 	contact_vp_status: true,
 	contact_how_met: true,
@@ -109,6 +111,27 @@ const contactsDealsFields = {
 	id_agent: true,
 	id_contact: true,
 	id_deal: true,
+};
+
+const vpAppFields = {
+	id_vp_app: false,
+	id_agent: false,
+	id_contact: false,
+	vp_temp_id: false,
+	vp_app_status: false, 
+
+	vp_type: true,
+	vp_name_business: true,
+	vp_phone: true,
+	vp_email: true,
+	vp_url: true,
+	vp_area: true,
+	vp_contact_person: true,
+	vp_review_url: true,
+	vp_agree: true,
+	vp_ref1: true,
+	vp_ref2: true,
+	vp_ref3: true,
 };
 
 const dealsFields = {
@@ -221,6 +244,21 @@ const proformaeFields = {
 
 	pf_deals_week: true,
 	pf_deals_month: true,
+};
+
+const vpAppStatusHash = {
+	'0': {editable: true,  color: '#f2b3bf', label: 'Not Sent', text: 'Please complete all fields, then click save.'},
+	'1': {editable: true,  color: '#E6F2FF', label: 'Sent To Vendor', text: 'Please complete all fields, then click save.'},
+	'2': {editable: true,  color: '#A4D2ED', label: 'Returned - Review Not Started Yet', text: 'Thank you for completing the application! We will start our review promptly and will be in touch with any questions. You may edit this application at the same link until our reveiw starts.'},
+	'3': {editable: false, color: '#63B3DB', label: 'In Review', text: 'We have started our review, i.e. calling references. The application is no longer editable. Please contact us directly with any questions.'},
+	'4': {editable: false, color: '#0083C0', label: 'Accepted / Active', text: 'Thank you for participating in our Vendor Partnership Program!'},
+	'5': {editable: false, color: '#f77791', label: 'Not participating',  text: ''},
+};
+
+for(let k in vpAppStatusHash){
+	const thisOne = vpAppStatusHash[k];
+	const rgb = hexToRgb(thisOne.color);
+	thisOne.luma = rgb.luma || 50;
 }
 
 const isAValidId = num => {
@@ -293,7 +331,6 @@ const formatActivityPut = (activity, supabase) => {
 	}
 
 	if(Array.isArray(activity.contacts)){
-		// console.log({contacts})
 		activity.contacts.forEach(c=>{
 			const newC = {};
 			for(let k in contactsFields){
@@ -572,23 +609,23 @@ const formatUpdatePromises = (getIdResponses, contacts4DBTempIdHash, id_agent, s
 
 	// dealResponses={id_deal, id_deal_temp} where id_deal_temp in deals4DBTempIds
 	// ie dealResponses =  
-	dealResponses.forEach(x=>{
+	dealResponses.forEach(d=>{
 		// @@@@@@@@ LINK FOLLOW-UPS TO DEALS @@@@@@@@@	
 		updatePromises.push(new Promise(resolve=>{
 			resolve(
 				supabase
 				.from('activities')
-				.update({id_deal_fu:       x.id_deal})
-				.eq(    'id_deal_fu_temp', x.id_deal_temp)
+				.update({id_deal_fu:       d.id_deal})
+				.eq(    'id_deal_fu_temp', d.id_deal_temp)
 				)
 			})
 		);
 		// @@@@@@@@ CREATE ACTIVITIES_DEALS @@@@@@@@@	
-		if(!activitiesDealsResponsesHash[`${x.id_deal}`]){
+		if(!activitiesDealsResponsesHash[`${d.id_deal}`]){
 			const activityDeal = {
 				id_agent,
 				id_activity: id_activity_final,
-				id_deal: x.id_deal,
+				id_deal: d.id_deal,
 			};
 			updatePromises.push(new Promise(resolve=>{
 				resolve(
@@ -602,13 +639,14 @@ const formatUpdatePromises = (getIdResponses, contacts4DBTempIdHash, id_agent, s
 		// @@@@@@@@ CREATE CONTACTS_DEALS @@@@@@@@@	
 
 		contactResponses.forEach(c=>{
-			const contactsDealExists = contactsDealsResponsesHash[`${c.id_contact}`] === x.id_deal;
-			const isMain = typeof c.id_contact_temp === 'string' && c.id_contact_temp.includes('main');
-			if(isMain && !contactsDealsFields){
+			const contactsDealExists = contactsDealsResponsesHash[`${c.id_contact}`] === d.id_deal;
+			const thisConnection = contacts4DBTempIdHash[`${c.id_contact_temp}`] || {};
+			const contactsDealShouldExist = thisConnection.connection_record_type === 'main';
+			if(contactsDealShouldExist && !contactsDealExists){
 				const contactDeal = {
 					id_agent,
 					id_contact: c.id_contact,
-					id_deal: x.id_deal,
+					id_deal: d.id_deal,
 				};
 				updatePromises.push(new Promise(resolve=>{
 					resolve(
@@ -713,9 +751,11 @@ module.exports = {
 	connectionsFields,
 	contactsFields,
 	contactsDealsFields,
+	vpAppFields,
 	dealsFields,
 	activitiesDealsFields,
 	coreValuesFields,
 	dailyPlansFields,
 	proformaeFields,
+	vpAppStatusHash,
 };

@@ -87,6 +87,7 @@ router.get('/get-lists', (req, res)=>{
 			.from('deals')
 			.select('*')
 			.eq('id_agent', id_agent)
+			.order('deal_name')
 	})
 	.then(r=>{
 		deals = Array.isArray(r.data) ? r.data : [];
