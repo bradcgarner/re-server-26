@@ -1,128 +1,183 @@
-insert into vp_categories (category, group, tag1, tag2, tag3, tag4, tag5) values
+insert into vp_categories (vp_category, vp_group, vp_tags, sort_order) values
 
-('Notary', 'Prof Svcs}'),
+-----------------
 
-('Appraiser', 'Prof Svcs', '{Real Estate}'),
-('1031 Exchange Specialist', 'Prof Svcs', '{Real Estate}'),
-('Well and Septic Consultant', 'Prof Svcs', '{Sitework,Real Estate}'),
-('Surveyor', 'Prof Svcs', '{Sitework', 'Real Estate}'),
-('Landscape Designer', 'Prof Svcs', '{Sitework,Landscape,Real Estate}'),
+('Notary', 'Professional Services', '{Legal,Real Estate}', 1),
 
-('Estate Attorney', 'Prof Svcs', '{Legal,Real Estate}'),
-('Divorce Attorney', 'Prof Svcs', '{Legal}'),
-('CPA', 'Prof Svcs', '{Finance}'),
-('Estate Planner', 'Prof Svcs', '{Legal}'),
+('Title', 'Professional Services', '{Legal,Real Estate}',9),
+('Appraiser', 'Professional Services', '{Real Estate}',10),
+('1031 Exchange Specialist', 'Professional Services', '{Real Estate}',11),
 
-('Financial Planner', 'Prof Svcs', '{Finance}'),
-('Lender', 'Prof Svcs', '{Finance}'),
+('Attorney (Other)', 'Professional Services', '{Legal}',30),
 
-('Insurance Broker', 'Prof Svcs', '{Insurance}'),
+('Attorney - Estate', 'Professional Services', '{Legal,Real Estate}',31),
+('Attorney - Divorce', 'Professional Services', '{Legal}',32),
+('Attorney - Probate', 'Professional Services', '{Legal}',32),
+('Attorney - Personal Injury', 'Professional Services', '{Legal}',32),
+('Attorney - Moving Violations', 'Professional Services', '{Legal}',32),
+('Attorney - Regulatory', 'Professional Services', '{Legal}',32),
 
-('Wedding Planner', 'Prof Svcs', '{Events}'),
-('Photographer', 'Prof Svcs', '{Events}'),
-('Videographer', 'Prof Svcs', '{Events}'),
+('CPA', 'Professional Services', '{Finance}',35),
+('Estate Planner', 'Professional Services', '{Legal}',37),
 
-('Personal Chef', 'Prof Svcs', '{Food}'),
+('Financial Planner', 'Professional Services', '{Finance}',40),
+('Lender', 'Professional Services', '{Finance}',41),
+('Lender (Investment)', 'Professional Services', '{Finance}',42),
 
-('House Sitter', 'Prof Svcs', '{Travel}'),
+('Insurance (Home, Auto)', 'Professional Services', '{Insurance}',50),
 
-('Movers', 'Prof Svcs', '{PP', '{Real Estate}'),
+('Wedding Planner', 'Professional Services', '{Events}',60),
+('Photographer', 'Professional Services', '{Events}',61),
+('Videographer', 'Professional Services', '{Events}',62),
 
-('Child Care', 'Prof Svcs', '{Kids}'),
-('Babysitter', 'Prof Svcs', '{Kids}'),
+('Personal Chef', 'Professional Services', '{Food}',70),
+('Travel Advisor', 'Professional Services', '{Travel}',72),
 
-('Instrument Repair', 'Prof Svcs', '{Music}'),
-('Piano Tuner', 'Prof Svcs', '{Music}'),
-('Music Lessons', 'Prof Svcs', '{Music}'),
+('House Sitter', 'Professional Services', '{Travel}',75),
 
-('Travel Advisor', 'Prof Svcs', '{Travel}'),
+('Movers', 'Professional Services', '{Personal Property,Real Estate}',80),
 
-('Kitchen And Bath Contractor', 'RE', '{Builder,K&B}'),
-('Countertop Contractor', 'RE', '{Builder,K&B}'),
-('Tiler', 'RE', '{Builder', 'K&B}'),
-('Concrete Contractor', 'RE', '{Builder}'),
-('Masonry Contractor', 'RE', '{Builder}'),
-('Flooring Installer', 'RE', '{Builder}'),
-('Carpet Installer', 'RE', '{Builder}'),
-('Floor Refinisher', 'RE', '{Builder}'),
-('Drywaller', 'RE', '{Builder}'),
-('Painter', 'RE', '{Builder}'),
-('Plumber', 'RE', '{Builder,K&B}'),
-('Electrician', 'RE', '{Builder,K&B}'),
-('Foundation Specialist', 'RE', '{Builder}'),
-('Carpenter', 'RE', '{Builder}'),
+('Home Warranty', 'Real Estate', '{Appliances,Real Estate}', 81),
+('Home Inspector', 'Real Estate', '{Real Estate}', 83),
+('Radon Inspector', 'Real Estate', '{Real Estate}', 84),
+('Mold Inspector', 'Real Estate', '{Real Estate}', 85),
 
-('Well Driller', 'RE', '{Sitework}'),
-('Septic Installer', 'RE', '{Sitework}'),
-('Earthwork Contractor', 'RE', '{Sitework}'),
-('Gravel Provider', 'RE', '{Sitework}'),
-('Asphalt Millings Provider', 'RE', '{Sitework}'),
-('Power Washer', 'RE', '{Sitework}'),
-('Land Clearer', 'RE', '{Sitework}'),
+('Property Management', 'Real Estate', '{Real Estate}', 87),
+('Realtor', 'Real Estate', '{Real Estate}', 88),
 
-('Roofer', 'RE', '{Builder', 'Envelope}'),
-('Window and Siding Installer', 'RE', '{Builder,Envelope}'),
-('Gutter and Downspout Installer', 'RE', '{Builder,Envelope}'),
 
-('General Contractor', 'RE', '{Builder}'),
+('Driver', 'Professional Services', '{Transportation}',89),
+('Child Care', 'Professional Services', '{Kids}',90),
+('Babysitter', 'Professional Services', '{Kids}',91),
 
-('HVAC Installer', 'RE', '{HVAC,Mechanical}'),
-('HVAC Maintainer', 'RE', '{HVAC,Mechanical}'),
+('Instrument Repair', 'Professional Services', '{Music}',100),
+('Piano Tuner', 'Professional Services', '{Music}',105),
+('Music Lessons', 'Professional Services', '{Music}',106),
 
-('Cleaners', 'RE', '{Cleaning,Maintenance}'),
-('Housekeeper', 'RE', '{Cleaning,Maintenance}'),
+('Well and Septic Consultant', 'Professional Services', '{Sitework,Real Estate}',110),
+('Surveyor', 'Professional Services', '{Sitework,Real Estate}',120),
+('Landscape Designer', 'Professional Services', '{Sitework,Landscape,Real Estate}',135),
+('Arborist', 'Professional Services', '{Sitework,Landscape,Real Estate}',136),
 
-('Radon and Mold Restoration', 'RE', '{Restoration}'),
-('Smoke Restoration', 'RE', '{Restoration}'),
-('Water Restoration', 'RE', '{Restoration}'),
-('Basement Waterproofer', 'RE', '{Restoration}'),
-('Basement Drainage Installer', 'RE', '{Restoration}'),
+('Real Estate Investor', 'Real Estate', '{Investor}',170),
 
-('Landscape Maintenance', 'RE', '{Sitework,Landscape,Maintenance}'),
-('Landscape Contractor', 'RE', '{Sitework,Landscape,Builder}'),
-('Irrigation Contractor', 'RE', '{Sitework,Landscape}'),
-('Fence Installer', 'RE', '{Sitework,Landscape,Builder}'),
 
-('Pest Control', 'RE', '{Pest Control}'),
-('Wildlife Control', 'RE', '{Pest Control}'),
-('Bat Removal', 'RE', '{Pest Control}'),
-('Bee Removal', 'RE', '{Pest Control}'),
+('General Contractor', 'Real Estate', '{Builder}',190),
+('Handyman', 'Real Estate', '{Builder}',192),
 
-('Massage Therapist', 'Body', '{Health & Fitness}'),
-('Chiropractor', 'Body', '{Health & Fitness}'),
-('Personal Trainer', 'Body', '{Health & Fitness}'),
-('Yoga Studio', 'Body', '{Health & Fitness}'),
+('Modular Home Builder', 'Real Estate', '{Builder}',195),
+('Manufactured Home Builder', 'Real Estate', '{Builder}',196),
 
-('Dermatologist', 'Body', '{Medical}'),
-('Doctor (GP)', 'Body', '{Medical}'),
-('Doctor (Eye)', 'Body', '{Medical}'),
-('Dentist', 'Body', '{Medical}'),
 
-('Barber', 'Body', '{Grooming}'),
-('Hair Stylist', 'Body', '{Grooming}'),
+('Kitchen And Bath Contractor', 'Real Estate', '{Builder,K&B}',200),
+('Countertop Contractor', 'Real Estate', '{Builder,K&B}',202),
+('Tiler', 'Real Estate', '{Builder,K&B}',204),
+('Concrete Contractor', 'Real Estate', '{Builder}',206),
+('Masonry Contractor', 'Real Estate', '{Builder}',210),
+('Flooring Installer', 'Real Estate', '{Builder}',212),
+('Carpet Installer', 'Real Estate', '{Builder}',214),
+('Floor Refinisher', 'Real Estate', '{Builder}',216),
+('Drywaller', 'Real Estate', '{Builder}',220),
+('Painter', 'Real Estate', '{Builder}',230),
+('Plumber', 'Real Estate', '{Builder,K&B}',240),
+('Electrician', 'Real Estate', '{Builder,K&B}',245),
+('Foundation Specialist', 'Real Estate', '{Builder}',250),
+('Carpenter', 'Real Estate', '{Builder}',260),
+('Fireplace and Chimney', 'Real Estate', '{Builder}',261),
 
-('Veterinarian', 'Pets', '{Prof Svcs}'),
-('Dog Walker', 'Pets', '{Prof Svcs}'),
-('Pet Sitter', 'Pets', '{Prof Svcs}'),
-('Pet Boarder', 'Pets', '{Prof Svcs}'),
-('Pet Groomer', 'Pets', '{Prof Svcs}'),
-('Pet Fence Installer', 'Pets', '{Prof Svcs}'),
+('Window and Glass Fabricator', 'Real Estate', '{Builder,Envelope}',269),
+('Roofer', 'Real Estate', '{Builder,Envelope}',270),
+('Window and Siding Installer', 'Real Estate', '{Builder,Envelope}',272),
+('Gutter and Downspout Installer', 'Real Estate', '{Builder,Envelope}',274),
 
-('Jeweler', 'PP', null),
-('Organizer', 'PP', '{Storage}'),
-('De-Hoarder', 'PP', '{Storage}'),
+('HVAC Installer', 'Real Estate', '{HVAC,Mechanical}',300),
+('HVAC Maintainer', 'Real Estate', '{HVAC,Mechanical}',310),
 
-('Appliance Repair', 'PP', '{Appliances,Maintenance}'),
+('Appliance Repair', 'Real Estate', '{Personal Property,Appliances,Maintenance}',320),
 
-('Self Storage', 'PP', '{Storage}'),
-('PODS', 'PP', '{Storage}'),
+('Architect', 'Real Estate', '{Design}',340),
+('Engineer - Civil', 'Real Estate', '{Design}',341),
+('Engineer - Structural', 'Real Estate', '{Design}',342),
 
-('Computer Repair', 'PP', '{Technology}'),
 
-('Tailor', 'PP', '{Clothing}'),
-('Seamstress', 'PP', '{Clothing}'),
-('Dry Cleaner', 'PP', '{Clothing}'),
+('Well Driller', 'Real Estate', '{Sitework}',430),
+('Septic Installer', 'Real Estate', '{Sitework}',432),
+('Septic Maintainer', 'Real Estate', '{Sitework,Maintenance}',433),
+('Earthwork Contractor', 'Real Estate', '{Sitework}',435),
+('Gravel Provider', 'Real Estate', '{Sitework}',438),
+('Asphalt Millings Provider', 'Real Estate', '{Sitework}',440),
+('Power Washer', 'Real Estate', '{Sitework}',444),
+('Land Clearer', 'Real Estate', '{Sitework}',448),
 
-('Auto Repair', 'Auto', null),
-('Auto Body Repair', 'Auto', null),
-('Car Detailer', 'Auto', null);
+
+('Metal Fabricator', 'Real Estate', '{Builder}',452),
+
+('Landscape Maintenance', 'Real Estate', '{Sitework,Landscape,Maintenance}',460),
+('Landscape Contractor', 'Real Estate', '{Sitework,Landscape,Builder}',465),
+('Irrigation Contractor', 'Real Estate', '{Sitework,Landscape}',470),
+('Fence Installer', 'Real Estate', '{Sitework,Landscape,Builder}',480),
+('Tree Work', 'Real Estate', '{Sitework,Landscape}',481),
+
+('Dumpster', 'Real Estate', '{Demolition,Trash}',491),
+('Trash Removal', 'Real Estate', '{Demolition,Trash}',492),
+
+('Cleaners', 'Real Estate', '{Cleaning,Maintenance}',500),
+('Housekeeper', 'Real Estate', '{Cleaning,Maintenance}',510),
+
+('Radon Mitigation', 'Real Estate', '{Restoration}',514),
+('Mold Remediation', 'Real Estate', '{Restoration}',515),
+('Smoke Restoration', 'Real Estate', '{Restoration}',518),
+('Water Restoration', 'Real Estate', '{Restoration}',520),
+('Basement Waterproofer', 'Real Estate', '{Restoration}',522),
+('Basement Drainage Installer', 'Real Estate', '{Restoration}',524),
+('Storm Damage Restoration', 'Real Estate', '{GC,Roofing,Siding,Windows,Restoration}',526),
+
+
+
+('Pest Control', 'Real Estate', '{Pest Control}',600),
+('Wildlife Control', 'Real Estate', '{Pest Control}',604),
+('Bat Removal', 'Real Estate', '{Pest Control}',608),
+('Bee Removal', 'Real Estate', '{Pest Control}',610),
+
+('Massage Therapist', 'Body', '{Health & Fitness}',700),
+('Chiropractor', 'Body', '{Health & Fitness}',710),
+('Personal Trainer', 'Body', '{Health & Fitness}',720),
+('Yoga Studio', 'Body', '{Health & Fitness}',724),
+
+('Barber', 'Body', '{Grooming}',740),
+('Hair Stylist', 'Body', '{Grooming}',745),
+
+('Dermatologist', 'Body', '{Medical}',800),
+('Doctor (GP)', 'Body', '{Medical}',802),
+('Doctor (Eye)', 'Body', '{Medical}',804),
+('Dentist', 'Body', '{Medical}',820),
+
+
+
+('Veterinarian', 'Pets', '{Professional Services}',1000),
+('Dog Walker', 'Pets', '{Professional Services}',1010),
+('Pet Sitter', 'Pets', '{Professional Services}',1014),
+('Pet Boarder', 'Pets', '{Professional Services}',1016),
+('Pet Groomer', 'Pets', '{Professional Services}',1018),
+('Pet Fence Installer', 'Pets', '{Professional Services}',1020),
+
+('Jeweler', 'Personal Property', '{Valuables}',1100),
+('Organizer', 'Personal Property', '{Storage}',1105),
+('De-Hoarder', 'Personal Property', '{Storage}',1108),
+
+
+('Storage', 'Personal Property', '{Storage}',1200),
+('PODS', 'Personal Property', '{Storage}',1210),
+
+('Computer Repair', 'Personal Property', '{Technology}',1300),
+
+('Tailor', 'Personal Property', '{Clothing}',1400),
+('Seamstress', 'Personal Property', '{Clothing}',1410),
+('Dry Cleaner', 'Personal Property', '{Clothing}',1415),
+
+('Sign Maker', 'Personal Property', '{Real Estate}',1420),
+
+('Auto Repair', 'Auto', '{Repair}',1500),
+('Auto Body Repair', 'Auto', '{Repair}',1510),
+('Car Detailer', 'Auto', '{Maintenance}',1520);
+

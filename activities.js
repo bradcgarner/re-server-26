@@ -130,6 +130,7 @@ const getActivityById = (id_activity, res) => {
 					connection_record_type: j.connection_record_type,
 					connection_vp_reference: j.connection_vp_reference,
 					connection_notes: j.connection_notes,
+					id_vp_app: j.id_vp_app,
 				}
 			);
 			if(j.connection_record_type === 'main'){

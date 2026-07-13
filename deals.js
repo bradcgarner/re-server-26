@@ -113,7 +113,6 @@ const getDealById = (id_deal, res) => {
 
 router.get('/income', (req, res)=>{
 
-	console.log('ping')
 	const id_agent = getIdAgent(userContainer);
 	const today = new Date();
 	const month = today.getMonth();

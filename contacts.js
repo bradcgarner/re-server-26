@@ -194,6 +194,68 @@ router.get('/vps', (req, res)=>{
 	})
 });
 
+router.get('/vp-groups', (req, res)=>{
+	const id_agent = getIdAgent(userContainer);
+
+	const vpHash = {};
+
+	return new Promise(resolve => {
+		resolve();
+	})
+	.then(()=>{
+		return supabase
+			.from('contacts')
+			.select(`id_contact,
+				contact_vp_categories,
+				contact_company,
+				contact_vp_areas,
+				contact_address_city,
+				contact_address_state`)
+			.eq('id_agent', id_agent)
+			.eq('contact_vp_status', vpStatusValueListId)
+			.order('contact_company', 'contact_name_last')
+	})
+	.then(r=>{
+		const vps = r && Array.isArray(r.data) ? r.data : [];
+
+		vps.forEach(v=>{
+			if(Array.isArray(v.contact_vp_categories)){
+				v.contact_vp_categories.forEach(c=>{
+					if(!Array.isArray(vpHash[c])){
+						vpHash[c] = [];
+					}
+					vpHash[c].push(v);
+				})
+			}
+		});
+
+		return supabase
+			.from('vp_categories')
+			.select(`*`)
+			.order('sort_order')
+	})
+	.then(r=>{
+		const { data, error } = r;
+
+		const vp_categories = Array.isArray(data) ? data : [] ;
+
+		const vpGroupHash = {};
+		vp_categories.forEach(c=>{
+			c.vp_members = Array.isArray(vpHash[c.vp_category]) ? vpHash[c.vp_category] : [];
+			if(!Array.isArray(vpGroupHash[c.vp_group])){
+				vpGroupHash[c.vp_group] = [];
+			}
+			vpGroupHash[c.vp_group].push(c);
+		})
+		return res.status(200).json(vpGroupHash);
+		
+	})
+	.catch(err => {
+		console.error(err);
+		return res.status(500).json(err);
+	})
+});
+
 router.get('/vp-app/:id_contact', (req, res)=>{
 	const id_contact = req.params.id_contact;
 	if(!id_contact) throw { message: 'invalid id_contact' };
@@ -291,7 +353,6 @@ router.put('/send-vp-app', (req, res)=>{
 			.eq('id_contact',vp.id_contact)
 	})
 	.then(r=>{
-		console.log('r2',r)
 		return getContactById(vp.id_contact, res);
 	})
 	.catch(err => {
@@ -329,7 +390,6 @@ router.put('/review-vp-app', (req, res)=>{
 			.eq('id_contact',vp.id_contact)
 	})
 	.then(r=>{
-		console.log('r2',r)
 		return getContactById(vp.id_contact, res);
 	})
 	.catch(err => {
@@ -367,7 +427,6 @@ router.put('/activate-vp', (req, res)=>{
 			.eq('id_contact',vp.id_contact)
 	})
 	.then(r=>{
-		console.log('r2',r)
 		return getContactById(vp.id_contact, res);
 	})
 	.catch(err => {
@@ -405,7 +464,6 @@ router.put('/open-vp-app', (req, res)=>{
 			.eq('id_contact',vp.id_contact)
 	})
 	.then(r=>{
-		console.log('r2',r)
 		return getContactById(vp.id_contact, res);
 	})
 	.catch(err => {

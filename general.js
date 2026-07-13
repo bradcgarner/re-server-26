@@ -17,33 +17,30 @@ const userContainer = {};
 router.use((req, res, next)=>jwtStrategy(req, res, next, userContainer));
 
 const formatLists = data => {
-	const valueListHash = {};
-	const fullHash = {};
+	const vLGroupsHash = {};
+	const vLItemsHash = {};
 	data.forEach(d=>{
 		const rgb = hexToRgb(d.color);
 		const luma = rgb.luma || 50;
-		if(!Array.isArray(valueListHash[d.list])){
-			valueListHash[d.list] = [];
+		if(!Array.isArray(vLGroupsHash[d.list])){
+			vLGroupsHash[d.list] = [];
 		}
-		const valueD = {
+		const newD = {
 			id: d.id,
-			label: d.label,
-		};
-		const fullD = {
 			label: d.label,
 			color: d.color || '#cccccc',
 			luma,
 		}
 		if(d.value !== null){
-			fullD.value = d.value;
+			newD.value = d.value;
 		}		
 		if(d.category !== null){
-			fullD.category = d.category;
+			newD.category = d.category;
 		}
-		valueListHash[d.list].push(valueD);
-		fullHash[`${d.id}`] = fullD;
+		vLGroupsHash[d.list].push(newD);
+		vLItemsHash[`${d.id}`] = newD;
 	});
-	return {valueListHash, fullHash};
+	return {vLGroupsHash, vLItemsHash};
 };
 
 router.get('/get-lists', (req, res)=>{
@@ -55,6 +52,7 @@ router.get('/get-lists', (req, res)=>{
 	let dealsHash = {};
 	let coreValuesHash = {};
 	let coreValues = [];
+	let vpCategories = [];
 
 	const id_agent = getIdAgent(userContainer);
 	
@@ -62,6 +60,16 @@ router.get('/get-lists', (req, res)=>{
 		resolve();
 	})
 	.then(()=>{
+		// GET VP CATEGORIES
+		return supabase
+			.from('vp_categories')
+			.select(`*`)
+			.order('vp_category')
+	})
+	.then(r=>{
+		const { data, error } = r;
+		vpCategories = Array.isArray(data) ? data : [] ;
+
 		// GET PROFORMAE
 		return supabase
 			.from('proformae')
@@ -112,26 +120,28 @@ router.get('/get-lists', (req, res)=>{
 	})
 	.then(r=>{
 		const { data, error } = r;
-		if(Array.isArray(data)){
-			const {valueListHash, fullHash} = formatLists(data);
-			valueListHash.contact = contacts.map(c=>{
-				return {id: c.id_contact, label: `${c.contact_name_first} ${c.contact_name_last}`};
-			});
-			valueListHash.deal = deals.map(d=>{
-				return {id: d.id_deal, label: d.deal_name};
-			});
-			valueListHash['core value'] = coreValues.map(v=>{
-				return {id: v.id_cv, label: v.cv_label};
-			});
-			return res.status(200).json({
-				proformae,
-				valueListHash,
-				fullHash, 
-				contactsHash, 
-				dealsHash, 
-				coreValuesHash});
-		}
-		return res.status(204).json({});
+		const valueLists = Array.isArray(data) ? data : [] ;
+		
+		const {vLGroupsHash, vLItemsHash} = formatLists(valueLists);
+		vLGroupsHash.contact = contacts.map(c=>{
+			return {id: c.id_contact, label: `${c.contact_name_first} ${c.contact_name_last}`};
+		});
+		vLGroupsHash.deal = deals.map(d=>{
+			return {id: d.id_deal, label: d.deal_name};
+		});
+		vLGroupsHash['core value'] = coreValues.map(v=>{
+			return {id: v.id_cv, label: v.cv_label};
+		});
+		return res.status(200).json({
+			vpCategories,
+			proformae,
+			vLGroupsHash,
+			vLItemsHash, 
+			contactsHash, 
+			dealsHash, 
+			coreValuesHash
+		});
+		
 	})
 	.catch(err => {
 		console.error(err);

@@ -69,6 +69,7 @@ const routesAllowed = {
 			'//api/contacts': true,
 			'//api/contacts/vps': true,
 			'//api/contacts/vp-app/*': true,
+			'//api/contacts/vp-groups': true,
 			'//api/contacts/*': true,
 			'//api/daily-plans': true,
 			'//api/daily-plans/*': true,

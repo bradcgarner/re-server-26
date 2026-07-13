@@ -75,6 +75,7 @@ const connectionsFields = {
 	connection_record_type: true,
 	connection_vp_reference: true,
 	connection_notes: true,
+	id_vp_app: true,
 };
 
 const contactsFields = {
@@ -352,6 +353,7 @@ const formatActivityPut = (activity, supabase) => {
 				id_contact_temp: c.id_contact_temp,
 				id_connection: c.id_connection || null,
 				connection_record_type: c.connection_record_type || null,
+				id_vp_app: c.id_vp_app || null,
 			};
 		});
 	}
@@ -385,6 +387,7 @@ const formatActivityPut = (activity, supabase) => {
 				connection_vp_reference: c.connection_vp_reference || null,
 				connection_notes: c.connection_notes || null,
 				connection_type: c.connection_type || null,
+				id_vp_app: c.id_vp_app || null,
 			};
 		});
 	}
@@ -595,6 +598,7 @@ const formatUpdatePromises = (getIdResponses, contacts4DBTempIdHash, id_agent, s
 				connection_vp_reference: thisConnection.connection_vp_reference || null,
 				connection_notes: thisConnection.connection_notes || null,
 				connection_type: thisConnection.connection_type || null,
+				id_vp_app: thisConnection.id_vp_app || null,
 			};
 			updatePromises.push(new Promise(resolve=>{
 				resolve(

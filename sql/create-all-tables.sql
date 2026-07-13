@@ -58,7 +58,8 @@ create table connections (
 	timestamp_created timestamp with time zone default current_timestamp,
 	id_contact integer references contacts(id_contact),
 	id_activity integer references activities(id_activity),
-
+	id_vp_app integer references vp_app(id_vp_app),
+	
 	connection_type integer references value_lists(id),
 	connection_record_type text,
 	connection_vp_reference text,
@@ -79,6 +80,7 @@ create table contacts (
 	contact_where_met_notes text,
 	contact_notes text,
 	contact_vp_categories text[],
+	contact_vp_areas text[],
 	contact_name_first text,
 	contact_name_last text,
 	contact_phone text,
@@ -266,4 +268,13 @@ create table value_lists (
 	value float,
 	category text,
 	sort_order float
-;)
+);
+
+create table vp_categories (
+	id_vp_categ serial primary key,
+	timestamp_created timestamp with time zone default current_timestamp,
+	vp_category text,
+	vp_group text,
+	vp_tags text[],
+	sort_order float
+);
