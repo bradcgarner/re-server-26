@@ -53,6 +53,7 @@ router.get('/get-lists', (req, res)=>{
 	let coreValuesHash = {};
 	let coreValues = [];
 	let vpCategories = [];
+	let vpAreas = [];
 
 	const id_agent = getIdAgent(userContainer);
 	
@@ -69,6 +70,16 @@ router.get('/get-lists', (req, res)=>{
 	.then(r=>{
 		const { data, error } = r;
 		vpCategories = Array.isArray(data) ? data : [] ;
+
+		// GET VP AREAS
+		return supabase
+			.from('vp_areas')
+			.select(`*`)
+			.order('sort_order')
+	})
+	.then(r=>{
+		const { data, error } = r;
+		vpAreas = Array.isArray(data) ? data : [] ;
 
 		// GET PROFORMAE
 		return supabase
@@ -134,6 +145,7 @@ router.get('/get-lists', (req, res)=>{
 		});
 		return res.status(200).json({
 			vpCategories,
+			vpAreas,
 			proformae,
 			vLGroupsHash,
 			vLItemsHash, 

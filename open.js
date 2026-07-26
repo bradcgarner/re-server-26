@@ -8,6 +8,7 @@ const {
 	hexToRgb } = require('conjunction-junction');
 
 const { createClient } = require('@supabase/supabase-js');
+const { notifyOfSubmission } = require('./notifications');
 const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseKey = process.env.SUPABASE_SECRET_KEY;
 const supabase = createClient(supabaseUrl, supabaseKey);
@@ -93,6 +94,9 @@ router.put('/', (req, res)=>{
 		return new Promise(resolve => {
 			resolve();
 		})
+		.then(()=>{
+			return notifyOfSubmission(appConformed);
+		})
 		.then(r=>{
 			return supabase
 				.from('vp_app')
@@ -102,6 +106,7 @@ router.put('/', (req, res)=>{
 			const {data, error} = r;
 			return getAppById(appConformed.vp_temp_id, res);
 		})
+
 		.catch(err => {
 			console.error(err);
 			return res.status(500).json(err);
@@ -110,6 +115,9 @@ router.put('/', (req, res)=>{
 
 	return new Promise(resolve => {
 		resolve();
+	})
+	.then(()=>{
+		return notifyOfSubmission(appConformed);
 	})
 	.then(r=>{
 		return supabase

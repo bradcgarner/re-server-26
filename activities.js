@@ -19,13 +19,14 @@ const supabase = createClient(supabaseUrl, supabaseKey);
 
 const { jwtStrategy } = require('./auth');
 const { isPrimitiveNumber } = require('conjunction-junction/build/basic');
+const { dateDelta } = require('conjunction-junction/build/date-time');
 const userContainer = {};
 router.use((req, res, next)=>jwtStrategy(req, res, next, userContainer));
 
 
 router.get('/follow-ups', (req, res)=>{
 	const id_agent = getIdAgent(userContainer);
-
+	const limitToCurrent = req.query.limit === 'current';
 	return new Promise(resolve => {
 		resolve();
 	})
@@ -38,13 +39,26 @@ router.get('/follow-ups', (req, res)=>{
 				id_agent,
 				date_fu_timestamp,
 				fu_purpose, fu_notes`)
-			.not('date_fu_timestamp','is',null)
+			.is('date_convo_timestamp',null)
 			.eq('id_agent', id_agent)
-			.order('date_convo_timestamp')
+			.order('date_fu_timestamp')
 	})
 	.then(r=>{
 		const { data, error } = r;
-		return res.status(200).json(data);
+		const fus = Array.isArray(data) ? data.map(d=>{
+			return Object.assign({},d,{
+				isAFollowUp: true,
+			});
+		}) : [];
+		const today = new Date();
+		today.setHours(23);
+		today.setMinutes(59);
+		const finalFus = limitToCurrent ?
+		fus.filter((f,i)=>{
+			const theDelta = dateDelta(f.date_fu_timestamp, today, 'days');
+			return theDelta >= 0;
+		}) : fus;
+		return res.status(200).json(finalFus);
 	})
 	.catch(err => {
 		console.error(err);
@@ -285,15 +299,15 @@ router.put('/', (req, res)=>{
 	// @@@@@@@ INSERT ACTIVITIES, DEALS, CONTACTS @@@@@@@
 	return Promise.all(insertionPromises)
 		.then(r=>{
-			// if(Array.isArray(r)){
-			// 	r.forEach((p,i)=>{
-			// 		if(p.error){ 
-			// 			console.log(`ERROR 1 @ ${i}`, p.error) 
-			// 		} else {
-			// 			console.log(`INSERT 1 @ ${i}`, p.data)
-			// 		}
-			// 	})
-			// }
+			if(Array.isArray(r)){
+				r.forEach((p,i)=>{
+					if(p.error){ 
+						console.log(`ERROR 1 @ ${i}`, p.error) 
+					} else {
+						// console.log(`INSERT 1 @ ${i}`, p.data)
+					}
+				})
+			}
 			return;
 		})
 		// @@@@@@ GET ID OF ACTIVITY JUST INSERTED @@@@@@@@
@@ -389,7 +403,7 @@ router.put('/', (req, res)=>{
 			
 			// UPDATE ALL PERMANENT IDS
 			const updatePromises = formatUpdatePromises(getIdResponses, contacts4DBTempIdHash, id_agent, supabase);
-	
+			// console.log('contacts4DBTempIdHash',contacts4DBTempIdHash)
 			return Promise.all(updatePromises)
 				.then(r=>{
 					// if(Array.isArray(r)){

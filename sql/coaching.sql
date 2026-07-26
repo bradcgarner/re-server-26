@@ -1,17 +1,25 @@
-create table coaching (
+create table coaches (
 	id_coach serial primary key,
 	timestamp_created timestamp with time zone default current_timestamp,
 	
 	coach text,
-	coach_category text,
-	scheme text,
-	sort_order float,
-	one text, 
-	two text,
-	three text
+	coach_header text
 );
 
-insert into coaching (coach, scheme, coach_category, one, two, sort_order) values 
+create table coaching (
+	id_coach serial primary key,
+	timestamp_created timestamp with time zone default current_timestamp,
+	
+	coach_abbrev text,
+	coach_category text,
+	coach_scheme text,
+	coach_one text, 
+	coach_two text,
+	coach_three text,
+	sort_order float
+);
+
+insert into coaching (coach_abbrev, coach_scheme, coach_category, coach_one, coach_two, sort_order) values 
 ('EWTS - EG', 'QA',  'interest', 'A home was just listed near theirs',
 'I''m not sure if it''s for you, but your neighbor is selling their home and I can put together a report on how their sale will impact your home''s value.',
 1),
@@ -25,8 +33,9 @@ insert into coaching (coach, scheme, coach_category, one, two, sort_order) value
 5),
 
 ('EWTS - EG', 'QA',  'interest', 'I''m just browsing.',
-'I''m not sure if they''re for you, but I have a few homes that are similar to the one you inquired about that I could share with you.',
-'Don''t worry, I work with clients during all stages of the buying process, some of whom are many years out and just browsing, and some of whom want to buy sooner or later.',
+'I''m not sure if they''re for you, but I have a few homes that are similar to the one you inquired about that I could share with you.',6),
+
+('EWTS - EG', 'QA',  'interest', 'I''m just browsing.','Don''t worry, I work with clients during all stages of the buying process, some of whom are many years out and just browsing, and some of whom want to buy sooner or later.',
 7),
 
 ('EWTS - EG', 'QA',  'interest', 'I''m just browsing',
@@ -34,7 +43,9 @@ insert into coaching (coach, scheme, coach_category, one, two, sort_order) value
 8),
 
 ('EWTS - EG', 'QA',  'interest', 'Unresponsive',
-'VM: I''m guessing you haven''t gotten around to reviewing the list of properties I sent over. Text me a good time for us to chat.',
+'VM: I''m guessing you haven''t gotten around to reviewing the list of properties I sent over. Text me a good time for us to chat.',9),
+
+('EWTS - EG', 'QA',  'interest', 'Unresponsive',
 'VM: If I could find the perfect home for you, then would you be interested in having a quick chat? Please text me a good time for us to chat and review your search.',
 9),
 
@@ -104,7 +115,7 @@ insert into coaching (coach, scheme, coach_category, one, two, sort_order) value
 
 ('EWTS - EG', 'QA',  'agent selection', 'I already have interest.',
 'Just out of curiosity, did any of them put in an offer?',
-47);
+47),
 
 ('EWTS - EG', 'QA',  'agent selection', 'I can sell my house without you.',
 'Just out of curiosity, do you know why the average customer sells their own home for significantly less than when represented by a professional real estate agent?',
@@ -147,7 +158,8 @@ insert into coaching (coach, scheme, coach_category, one, two, sort_order) value
 67),
 
 ('EWTS - EG', 'QA',  'agent selection', 'I''m going to list with a discount broker.',
-'What''s your experience working with a full-service agent?',
+'What''s your experience working with a full-service agent?',69),
+('EWTS - EG', 'QA',  'agent selection', 'I''m going to list with a discount broker.',
 'What do you understand about the different levels of service in real estate?',
 69),
 
@@ -163,7 +175,7 @@ insert into coaching (coach, scheme, coach_category, one, two, sort_order) value
 'How certain are you that the listing agent will have your best interest in mind?',
 75),
 
-('EWTS - EG', 'QA',  'agent selection', 'Just out of curiosity, what would you consider the top 3 criteria you''re looking for in the perfect agent?',
+('EWTS - EG', 'QA',  'agent selection', 'Just out of curiosity, what would you consider the top 3 criteria you''re looking for in the perfect agent?',null,
 77),
 
 
@@ -192,7 +204,7 @@ insert into coaching (coach, scheme, coach_category, one, two, sort_order) value
 'Help me understand your experience with pricing homes.',
 115),
 
-('EWTS - EG', 'QA',  'list price', 'My home is better than the comps you used and deserves a higher price.',
+('EWTS - EG', 'QA',  'list price', 'My home is better than the comps you used and deserves a higher price.',null,
 117),
 
 ('EWTS - EG', 'QA',  'list price', 'Suggesting a price reduction','...',
@@ -229,7 +241,7 @@ insert into coaching (coach, scheme, coach_category, one, two, sort_order) value
 
 
 
-('EWTS - EG', 'QA',  'timing', '',
+('EWTS - EG', 'QA',  'timing',
 'I''m  not ready to relist.',
 'Most people in y our situation feel the same way. They believe thier home is never going to sell, but I can prove to you that we can sell your home for price you''ll be happy with.',
 161),
@@ -292,6 +304,5 @@ insert into coaching (coach, scheme, coach_category, one, two, sort_order) value
 
 ('EWTS - EG', 'QA',  'caution', 'I''m waiting for the perfect home.',
 'That''s smart. The good news is I can help you find it.',
-221),
-
+221);
 

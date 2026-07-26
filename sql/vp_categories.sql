@@ -1,3 +1,27 @@
+insert into vp_areas (vp_area, sort_order) values
+('Culpeper County', 1),
+('Fauquier County', 2),
+('Rappahannock County', 3),
+('Madison County', 4),
+('Orange County', 5),
+('Greene County', 6),
+('Albemarle County', 10),
+('Loudoun County', 20),
+('Fairfax County', 21),
+('Prince William County', 22),
+('Stafford County', 30),
+('Spotsylvania County', 31),
+('Louisa County', 32),
+('Caroline County', 33),
+('King George County', 34),
+('Clarke County', 40),
+('Frederick County', 41),
+('Shenandoah County', 42),
+('Warren County', 43),
+('Page County', 44),
+('Rockingham County', 45);
+
+
 insert into vp_categories (vp_category, vp_group, vp_tags, sort_order) values
 
 -----------------

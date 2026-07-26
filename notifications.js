@@ -14,7 +14,7 @@ sgMail.setApiKey(SENDGRID_API_KEY);
 
 const addr = {
   receiveAll         : ['brad@bradgarner.com'],
-  sendAll            :  'no-reply@bradgarner.com',
+  sendAll            :  'brad@bradgarner.com',
 };
 
 const sendPwReset = (user, tempPw) => {
@@ -22,7 +22,7 @@ const sendPwReset = (user, tempPw) => {
   const mailOptions = {
     from:    addr.sendAll,
     to:      [recipient],
-    cc:      addr.receiveAll,
+    bcc:      addr.receiveAll,
     subject: 'Password Reset',
     text:    `Your XXXXXXXX password has been temporarily reset to ${tempPw} and your username is ${user.username}.`,
     html:    `<p>Your <strong>XXXXXXX</strong> password has been temporarily reset to:</p>
@@ -48,15 +48,46 @@ const sendVPApp = vp => {
 	const mailOptions = {
     from:    addr.sendAll,
     to:      ['outinsidethebeltway@hotmail.com'],//[vp.contact_email],
-    cc:      addr.receiveAll,
+    bcc:      addr.receiveAll,
     subject: 'Vendor Partner Intake Form',
-    html:    `<p>Hi ${firstName}, Thanks so much for your interest in our Vendor Partner Program! The steps are simple.</p>
-		<p>1. Please complete the form at <a href="${link}">${link}</a>. The form will ask you for names and phone numbers of three of your past clients for references.</p>
-		<p>2. We'll call your references, and we will encourage them to leave you an online review at the link you provide.</p>
-		<p>3. Whenever we speak with anyone who might be in need of your services, we'll refer you, using your clients' references. As a general rule, we try to refer two partners of each category so that our customers have choices.</p>
-		<p>4. We'll check in from time-to-time to see how this is working out for you.</p>
-		<p>Thanks again!</p>`,
-    text:    `some text`,
+    html:    `<p style="font-weight: bold;">Hi ${firstName}, Thanks so much for your interest in our Vendor Partner Program!</p>
+		<p>This is a no-cost referral program. We maintain a list of 5-star vendors. The list is 100% word-of-mouth and 100% vetted with references, so that I can assure my clients superior referrals for all their needs.</p>
+		<p style="font-style: italic;">The steps are simple.</p>
+		<ol>
+		<li>Complete the form at <a href="${link}">${link}</a>. The form will ask you for names and phone numbers of 3 past clients for references.</p>
+		<li>We'll call your references. We will encourage them to leave you a GREAT online review at the link you provide.</p>
+		<li>Whenever we speak with anyone who might be in need of your services, we'll refer you, using your clients' references. As a general rule, we refer 2 partners of each category so that our customers have choices.</p>
+		<li>We'll check in from time-to-time to see how this is working out for you.</p>
+		</ol>
+		<p style="font-weight: bold;">Thanks again!</p>
+		<p> </p>
+		<p style="font-weight: bold; margin: 0px;">Brad Garner, Realtor</p>
+		<p style="margin: 0px;">703.731.4163</p>
+		<p style="margin: 0px;">https://www.bradgarner.com</p>
+		<p style="margin: 0px;">eXp Realty LLC</p>
+		<p style="margin: 0px;">VA Real Estate License # 0225276567</p>
+		<p> </p>
+		<p style="margin: 0px;"><span style="font-weight: bold;">Know someone thinking about moving? </span> Feel free to connect me — I'm happy to help.</p>
+		<p style="margin: 0px;"><span style="font-weight: bold;">Not local? No problem. </span> I can help with real estate or trusted business recommendations anywhere in the U.S. & Canada.</p>
+		<p style="margin: 0px;"><span style="font-weight: bold;">Need or recommend a great local business? </span> I keep a vetted list and am always happy to add great people to it,</p>`,
+    
+		text:    `Hi ${firstName}, Thanks so much for your interest in our Vendor Partner Program!
+		This is a no-cost referral program. We maintain a list of 5-star vendors. The list is 100% word-of-mouth and 100% vetted with references, so that I can assure my clients superior referrals for all their needs.
+		The steps are simple.
+		1. Complete the form at ${link}. The form will ask you for names and phone numbers of 3 past clients for references.
+		2. We'll call your references. We will encourage them to leave you a GREAT online review at the link you provide.
+		3. Whenever we speak with anyone who might be in need of your services, we'll refer you, using your clients' references. As a general rule, we refer 2 partners of each category so that our customers have choices.
+		4.We'll check in from time-to-time to see how this is working out for you.
+		Thanks again!
+		Brad Garner, Realtor
+		703.731.4163
+		https://www.bradgarner.com
+		eXp Realty LLC
+		VA Real Estate License # 0225276567
+		Know someone thinking about moving? Feel free to connect me — I'm happy to help.
+		Not local? No problem. I can help with real estate or trusted business recommendations anywhere in the U.S. & Canada.
+		Need or recommend a great local business? I keep a vetted list and am always happy to add great people to it.
+		`,
   };
 
 	sgMail.send(mailOptions)
@@ -69,8 +100,101 @@ const sendVPApp = vp => {
 	return;
 };
 
+const notifyOfSubmission = vp => {
+	const firstName = vp.vp_name_business || 'Partner';
+	const link = `${process.env.VP_APP_URL}${vp.vp_temp_id}`;
+
+	const mailOptions = {
+    from:    addr.sendAll,
+    to:      ['outinsidethebeltway@hotmail.com'],//[vp.contact_email],
+    cc:      addr.receiveAll,
+    subject: 'RECEIVED Vendor Partner Intake Form',
+    html:    `<p style="font-weight: bold;">Hi ${firstName}, Thank you for completing and returning the Vendor Partner Intake Form. This email confirms our receipt.</p>
+		<p>Until we review and accept the form, it remains editable at <a href="${link}">${link}</a> (just in case you need to change anything).</p>
+		<p style="font-weight: bold;">Thanks again! We'll be in touch soon.</p>
+		<p> </p>
+		<p style="font-weight: bold; margin: 0px;">Brad Garner, Realtor</p>
+		<p style="margin: 0px;">703.731.4163</p>
+		<p style="margin: 0px;">https://www.bradgarner.com</p>
+		<p style="margin: 0px;">eXp Realty LLC</p>
+		<p style="margin: 0px;">VA Real Estate License # 0225276567</p>
+		<p> </p>
+		<p style="margin: 0px;"><span style="font-weight: bold;">Know someone thinking about moving? </span> Feel free to connect me — I'm happy to help.</p>
+		<p style="margin: 0px;"><span style="font-weight: bold;">Not local? No problem. </span> I can help with real estate or trusted business recommendations anywhere in the U.S. & Canada.</p>
+		<p style="margin: 0px;"><span style="font-weight: bold;">Need or recommend a great local business? </span> I keep a vetted list and am always happy to add great people to it,</p>`,
+    
+		text:    ` `,
+	};
+
+	sgMail.send(mailOptions)
+		.then(()=>{
+			console.log('sent');
+		})
+		.catch(error =>{
+      console.error(`Error sending email to: ${mailOptions.to}`, error); 
+    });
+	return;
+};
+
+const sendReferrals = referrals => {
+	const emails = [];
+	referrals.forEach(r=>{
+		let html = `
+		<p>${`${r.sal} ${r.dear}`},</p>
+		<p>${r.message}</p>
+		`;
+						
+		if(Array.isArray(r.refs)){
+			r.refs.forEach(f=>{
+				html += `<div>
+					<p style="margin: 0px; font-weight: bold;">${f.co}</p>
+					<p style="margin: 0px;">${f.poc}</p>
+					<p style="margin: 0px;">${f.ph}</p>
+					<p style="margin: 0px;">${f.em}</p>
+					<p style="margin: 0px;">${f.url || 'no website'}</p>
+					<p style="margin: 0px;">Services: ${f.cat}</p>
+					<p style="margin: 0px;">Areas Served: ${f.area}</p>
+					<p style="margin: 0px;">${f.rev} <a href=${f.revUrl} target="_blank">${f.revUrl}</a></p>
+					<p>REFERENCES: </p>
+				</div>
+				`;
+					
+					if(Array.isArray(f.refs)){
+						f.refs.forEach(x=>{
+							html += `<div style="padding-bottom: 10px; margin-bottom: 10px; border-bottom: 1px solid black;">
+								<p style="margin: 0px;">${x.rev}</p>
+								<p style="margin: 0px;">- ${x.by}</p>
+							</div>
+							`;
+						});
+					}
+	
+			});
+		}
+		emails.push({
+			from:    addr.sendAll,
+			to:      ['outinsidethebeltway@hotmail.com'],//[r.contact_email],
+			bcc:      addr.receiveAll,
+			subject: 'Vendor References',
+			html,
+		});
+	});
+
+	emails.forEach((e,i)=>{
+		sgMail.send(e)
+			.then(()=>{
+				console.log('sent',i);
+			})
+			.catch(error =>{
+				console.error(`Error sending email to: ${e.to}`, error); 
+			})
+	});
+	return;
+};
 
 module.exports = {
   sendPwReset,
 	sendVPApp,
+	notifyOfSubmission,
+	sendReferrals,
 };

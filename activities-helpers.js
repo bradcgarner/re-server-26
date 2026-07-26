@@ -44,6 +44,7 @@ const activitiesFields = {
   convo_voice_note: true,
   convo_problem_solve: true,
   convo_notes: true,
+	convo_vp_ref: true,
   convo_deal_found: true,
 	convo_outcome: true,
 
@@ -56,6 +57,7 @@ const activitiesFields = {
 	id_activity_fu: true,
 	id_deal_fu: true,
 	id_contact_fu: true,
+	id_vp_fu: true,
 
 	id_contact_fu_temp: true,
 	id_who_introduced_temp: true,
@@ -91,10 +93,13 @@ const contactsFields = {
 	contact_where_met_notes: true,
 	contact_notes: true,
 	contact_vp_categories: true,
+	contact_vp_areas: true,
 	contact_name_first: true,
 	contact_name_last: true,
 	contact_phone: true,
 	contact_email: true,
+	contact_url: true,
+	contact_review_url: true,
 	contact_company: true,
 	contact_title: true,
 	contact_tags: true,
@@ -125,10 +130,10 @@ const vpAppFields = {
 	vp_name_business: true,
 	vp_phone: true,
 	vp_email: true,
-	vp_url: true,
+	vp_url: false, // user entered, but not required
 	vp_area: true,
 	vp_contact_person: true,
-	vp_review_url: true,
+	vp_review_url: false, // user entered, but not required
 	vp_agree: true,
 	vp_ref1: true,
 	vp_ref2: true,
@@ -248,8 +253,8 @@ const proformaeFields = {
 };
 
 const vpAppStatusHash = {
-	'0': {editable: true,  color: '#f2b3bf', label: 'Not Sent', text: 'Please complete all fields, then click save.'},
-	'1': {editable: true,  color: '#E6F2FF', label: 'Sent To Vendor', text: 'Please complete all fields, then click save.'},
+	'0': {editable: true,  color: '#f2b3bf', label: 'Not Sent', text: 'Please complete all fields, then click submit.'},
+	'1': {editable: true,  color: '#E6F2FF', label: 'Sent To Partner', text: 'Please complete all fields, then click submit.'},
 	'2': {editable: true,  color: '#A4D2ED', label: 'Returned - Review Not Started Yet', text: 'Thank you for completing the application! We will start our review promptly and will be in touch with any questions. You may edit this application at the same link until our reveiw starts.'},
 	'3': {editable: false, color: '#63B3DB', label: 'In Review', text: 'We have started our review, i.e. calling references. The application is no longer editable. Please contact us directly with any questions.'},
 	'4': {editable: false, color: '#0083C0', label: 'Accepted / Active', text: 'Thank you for participating in our Vendor Partnership Program!'},
@@ -375,9 +380,9 @@ const formatActivityPut = (activity, supabase) => {
 				delete newC.id_contact;
 			}
 			newC.id_agent = id_agent;
-			if(activityHasId){
-				newC.id_activity = id_activity;
-			}
+			// if(activityHasId){
+			// 	newC.id_activity = id_activity;
+			// }
 			contacts4DB.push(newC);
 			// console.log({newC})
 			contacts4DBTempIdHash[c.id_contact_temp] = {
@@ -448,6 +453,7 @@ const formatActivityPut = (activity, supabase) => {
 	const contactPromises = contacts4DB.map(x=>{
 		const id_contact = x.id_contact;
 		delete x.id_contact;
+		// console.log('C',id_contact, x)
 		if(id_contact){
 			// console.log('update',cForDb)
 			return new Promise(resolve=>{
@@ -586,25 +592,36 @@ const formatUpdatePromises = (getIdResponses, contacts4DBTempIdHash, id_agent, s
 				)
 			})
 		);
+		// console.log('connectionsResponsesHash',connectionsResponsesHash)
 		// @@@@@@@@ CREATE CONNECTIONS @@@@@@@@@	
+		const thisConnection = contacts4DBTempIdHash[x.id_contact_temp] || {};
+		const connection = {
+			id_activity: id_activity_final,
+			id_contact: x.id_contact,
+			id_agent,
+			connection_record_type: thisConnection.connection_record_type || 'connection', // default to something...
+			connection_vp_reference: thisConnection.connection_vp_reference || null,
+			connection_notes: thisConnection.connection_notes || null,
+			connection_type: thisConnection.connection_type || null,
+			id_vp_app: thisConnection.id_vp_app || null,
+		};
 		// if no existing connection is in DB
 		if(!connectionsResponsesHash[`${x.id_contact}`]){
-			const thisConnection = contacts4DBTempIdHash[x.id_contact_temp] || {};
-			const connection = {
-				id_activity: id_activity_final,
-				id_contact: x.id_contact,
-				id_agent,
-				connection_record_type: thisConnection.connection_record_type || 'connection', // default to something...
-				connection_vp_reference: thisConnection.connection_vp_reference || null,
-				connection_notes: thisConnection.connection_notes || null,
-				connection_type: thisConnection.connection_type || null,
-				id_vp_app: thisConnection.id_vp_app || null,
-			};
 			updatePromises.push(new Promise(resolve=>{
 				resolve(
 					supabase
 					.from('connections')
 					.insert(connection)
+					)
+				})
+			);
+		} else {
+			updatePromises.push(new Promise(resolve=>{
+				resolve(
+					supabase
+					.from('connections')
+					.update(connection)
+					.eq('id_connection', thisConnection.id_connection)
 					)
 				})
 			);

@@ -31,6 +31,7 @@ create table activities (
 	convo_problem_solve integer references value_lists(id),
 	convo_outcome integer references value_lists(id),
 	convo_notes text,
+	convo_vp_ref text,
 	convo_deal_found integer references value_lists(id),
 		
 	-- follow-up fields below populate from follow-ups array upon save
@@ -42,6 +43,7 @@ create table activities (
 	id_activity_fu integer references activities(id_activity),
 	id_deal_fu integer references deals(id_deal),
 	id_contact_fu integer references contacts(id_contact),
+	id_vp_fu integer references contacts(id_contact),
 
 	id_contact_fu_temp text,
 	id_who_introduced_temp text,
@@ -85,6 +87,8 @@ create table contacts (
 	contact_name_last text,
 	contact_phone text,
 	contact_email text,
+	contact_url text,
+	contact_review_url text,
 	contact_company text,
 	contact_title text,
 	contact_tags text[],
@@ -95,8 +99,6 @@ create table contacts (
 	contact_birth_month integer,
 	contact_birth_day integer,
 	contact_birth_year integer,
-
-	contact_url text,
 
 	id_vp_app integer references vp_app(id_vp_app)
 );
@@ -276,5 +278,12 @@ create table vp_categories (
 	vp_category text,
 	vp_group text,
 	vp_tags text[],
+	sort_order float
+);
+
+create table vp_areas (
+	id_vp_area serial primary key,
+	timestamp_created timestamp with time zone default current_timestamp,
+	vp_area text,
 	sort_order float
 );

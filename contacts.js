@@ -6,6 +6,7 @@ const {getIdAgent,
 	contactsFields,
 	vpAppStatusHash} = require('./activities-helpers');
 const generator             = require('generate-password');
+const { convertArrayToObject } = require('conjunction-junction');
 
 const { createClient } = require('@supabase/supabase-js');
 const supabaseUrl = process.env.SUPABASE_URL;
@@ -13,8 +14,7 @@ const supabaseKey = process.env.SUPABASE_SECRET_KEY;
 const supabase = createClient(supabaseUrl, supabaseKey);
 
 const { jwtStrategy } = require('./auth');
-const { sendVPApp } = require('./notifications');
-const { convertArrayToObject } = require('conjunction-junction/build/objects');
+const { sendVPApp, sendReferrals } = require('./notifications');
 const userContainer = {};
 router.use((req, res, next)=>jwtStrategy(req, res, next, userContainer));
 
@@ -116,6 +116,23 @@ const getContactById = (id_contact, res)=>{
 		app.vpAppStatusHash = vpAppStatusHash;
 		contact.vp_app = app;
 
+		// GET VP REFERENCES
+		return supabase
+			.from('activities')
+			.select(`id_activity,
+				date_convo_timestamp,
+				convo_notes,
+				convo_vp_ref,
+				id_contact_fu,
+				id_vp_fu`)
+			.eq('id_vp_fu',contact.id_contact)
+			.eq('id_agent', id_agent)
+	})
+	.then(r=>{
+		const { data, error } = r;
+		const refs = Array.isArray(data) ? data : [];
+		contact.vp_refs = refs;
+
 		return res.status(200).json(contact);
 	})
 	.catch(err => {
@@ -123,6 +140,8 @@ const getContactById = (id_contact, res)=>{
 		return res.status(500).json(err);
 	})
 };
+
+
 
 router.get('/vps', (req, res)=>{
 	const id_agent = getIdAgent(userContainer);
@@ -318,18 +337,141 @@ router.get('/', (req, res)=>{
 	})
 });
 
+router.put('/get-refs', (req, res)=>{
+	const id_agent = getIdAgent(userContainer);
+	let vps = [];
+
+	const referralBasket = req.body || {};
+	if(!referralBasket.to){
+		referralBasket.to = {};
+	}
+	if(!referralBasket.include){
+		referralBasket.include = {};
+	}
+
+	const idsAll = [];
+	const idsReferences = [];
+
+	for(let k in referralBasket.to){
+		idsAll.push(parseInt(k, 10));
+	}
+	for(let k in referralBasket.include){
+		idsAll.push(parseInt(k, 10));
+		idsReferences.push(parseInt(k, 10));
+	}
+
+	let contacts = [];
+	let references = [];
+
+	return new Promise(resolve => {
+		resolve();
+	})
+	.then(()=>{
+		return supabase
+			.from('contacts')
+			.select(`id_contact,
+				contact_name_first,
+				contact_name_last,
+				contact_title,
+				contact_company,
+				contact_phone,
+				contact_email,
+				contact_url,
+				contact_review_url,
+				contact_address_street,
+				contact_address_city,
+				contact_address_state,
+				contact_vp_areas,
+				contact_vp_categories`)
+			.eq('id_agent', id_agent)
+			.in('id_contact', idsAll)
+	})
+	.then(r=>{
+		const { data, error } = r;
+		if(Array.isArray(data)){
+			contacts = data;
+		}
+
+		return supabase
+			.from('activities')
+			.select(`id_activity,
+				date_convo_timestamp,
+				id_contact_fu,
+				id_vp_fu,
+				convo_vp_ref,
+				convo_notes`)
+			.in('id_vp_fu',idsReferences)
+			.eq('id_agent',id_agent)
+			.eq('convo_main_purpose', 34)
+	})
+	.then(r=>{
+		const { data, error } = r;
+		if(Array.isArray(data)){
+			references = data;
+		}
+
+		const referralBasketNew = JSON.parse(JSON.stringify(referralBasket));
+		for(let k in referralBasketNew.to){
+			referralBasketNew.to[k] = {contact:{}};
+			theId = parseInt(k, 10);
+			contacts.forEach(c=>{
+				if(c.id_contact === theId){
+					referralBasketNew.to[k].contact = c;
+				}
+			});
+		}
+		for(let k in referralBasketNew.include){
+			referralBasketNew.include[k] = {contact:{},refs:[]};
+			theId = parseInt(k, 10);
+			contacts.forEach(c=>{
+				if(c.id_contact === theId){
+					referralBasketNew.include[k].contact = c;
+				}
+			});
+			references.forEach(r=>{
+				if(r.id_vp_fu === theId){
+					referralBasketNew.include[k].refs.push(r);
+				}
+			});
+		}
+		
+		return res.status(200).json(referralBasketNew);
+		
+	})
+	.catch(err => {
+		console.error(err);
+		return res.status(500).json(err);
+	})
+});
+
+router.put('/send-refs', (req, res)=>{
+	const id_agent = getIdAgent(userContainer);
+
+	const referrals = Array.isArray(req.body) ? req.body : null;
+
+	if(!referrals){
+		return res.status(204);
+	}
+
+	return new Promise(resolve => {
+		resolve();
+	})
+	.then(()=>{
+		sendReferrals(referrals);
+	})
+	.then(()=>{
+		return res.status(200).json({ok: true});
+	})
+	.catch(err => {
+		console.error(err);
+		return res.status(500).json(err);
+	})
+});
+
 router.put('/send-vp-app', (req, res)=>{
 	const vp = req.body;
 	const id_contact = vp.id_contact;
 
-	// vp API = {
-	// 		id_contact: contact.id_contact,
-	// 		contact_name_first: contact.contact_name_first,
-	// 		contact_email: contact.contact_email,
-	// 		contact_company: contact.contact_company,
-	// 		id_vp_app: vpApp.id_vp_app,
-	// 		vp_temp_id: vpApp.vp_temp_id,
-	// }
 	return new Promise(resolve => {
 		resolve();
 	})

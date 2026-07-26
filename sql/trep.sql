@@ -1,6 +1,6 @@
 --TREP Models
 --Start page 86 of TREP Deal A Day...
-insert into coaching (coach, scheme, coach_category, one, sort_order) values
+insert into coaching (coach_abbrev, coach_scheme, coach_category, coach_one, sort_order) values
 
 ('TREP', 'h1', 'TREP sandwich model', '#1 model: the sandwich formula ',   1 ),
 ('TREP', 'scheme', 'TREP sandwich model', 'Use this formula in each of the conversations & STAY HUMAN!!! ',  3  ),

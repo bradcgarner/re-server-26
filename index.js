@@ -55,6 +55,7 @@ function runServer(port=PORT) {
 		const { router: dealsRouter} = require('./deals');
 		const { router: proformaeRouter} = require('./proformae');
 		const { router: dailyPlansRouter} = require('./daily-plans');
+		const { router: coachingRouter} = require('./coaching');
 
 		app.use('/api/open', openRouter);
 		app.use('/api/auth', authRouter);
@@ -64,6 +65,7 @@ function runServer(port=PORT) {
 		app.use('/api/deals', dealsRouter);
 		app.use('/api/proformae', proformaeRouter);
 		app.use('/api/daily-plans', dailyPlansRouter);
+		app.use('/api/coaching', coachingRouter);
 
 		console.log('All server modules have loaded. Ready for use. Done.');
 		return;
