@@ -1,20 +1,44 @@
+'use strict';
+// EXPRESS
 const express               = require('express');
 const router                = express.Router();
-const fs = require('fs');
 router.use(express.json());
-const {getIdAgent} = require('./activities-helpers');
-const { 
-	convertArrayToObject,
-	hexToRgb } = require('conjunction-junction');
-
+// DATABASE
 const { createClient } = require('@supabase/supabase-js');
 const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseKey = process.env.SUPABASE_SECRET_KEY;
 const supabase = createClient(supabaseUrl, supabaseKey);
-
+// AUTH
 const { jwtStrategy } = require('./auth');
 const userContainer = {};
 router.use((req, res, next)=>jwtStrategy(req, res, next, userContainer));
+// OTHER LIBRARIES
+const { 
+	convertArrayToObject,
+	hexToRgb } = require('conjunction-junction');
+// INTERNAL REFERENCES
+const {getIdAgent} = require('./helpers');
+const {vpAppStatusHash,
+	vlStatic,
+	convoDealFoundHash,
+	commissionHash,
+	referralHash,
+	vpReferenceHash,
+	vpShowApplicationHash,
+	vpReferenceConstant,
+	vpBinaryHash,
+	dealFoundHash,
+	convoTypeHash,
+	convoIntentionalHash,
+	problemSolveHash,
+	dateIntegerHash,
+	reverseMonthHash,
+	tempIdKeys,
+	inputFormatOptions,
+} = require('./db-static');
+
+// @@@@@@@@@@@ START ROUTER @@@@@@@@@@@@
+
 
 const formatLists = data => {
 	const vLGroupsHash = {};
@@ -135,7 +159,10 @@ router.get('/get-lists', (req, res)=>{
 		
 		const {vLGroupsHash, vLItemsHash} = formatLists(valueLists);
 		vLGroupsHash.contact = contacts.map(c=>{
-			return {id: c.id_contact, label: `${c.contact_name_first} ${c.contact_name_last}`};
+			const label = c.contact_vp_status === vlStatic.contactVPStatusYes ?
+			`${c.contact_company} (${c.contact_name_first} ${c.contact_name_last})` :
+			`${c.contact_name_first} ${c.contact_name_last}`;
+			return {id: c.id_contact, label};
 		});
 		vLGroupsHash.deal = deals.map(d=>{
 			return {id: d.id_deal, label: d.deal_name};
@@ -151,7 +178,24 @@ router.get('/get-lists', (req, res)=>{
 			vLItemsHash, 
 			contactsHash, 
 			dealsHash, 
-			coreValuesHash
+			coreValuesHash,
+			vpAppStatusHash,
+			vlStatic,
+			convoDealFoundHash,
+			commissionHash,
+			referralHash,
+			vpReferenceHash,
+			vpShowApplicationHash,
+			vpReferenceConstant,
+			vpBinaryHash,
+			dealFoundHash,
+			convoTypeHash,
+			convoIntentionalHash,
+			problemSolveHash,
+			dateIntegerHash,
+			reverseMonthHash,
+			inputFormatOptions,
+			tempIdKeys,
 		});
 		
 	})
@@ -162,13 +206,6 @@ router.get('/get-lists', (req, res)=>{
 });
 
 router.get('/core-values/:id_agent', (req, res)=>{
-
-	let contacts = [];
-	let contactsHash = {};
-	let deals = [];
-	let dealsHash = {};
-	let coreValuesHash = {};
-	let coreValues = [];
 
 	const id_agent = req.params.id_agent;
 
@@ -183,7 +220,7 @@ router.get('/core-values/:id_agent', (req, res)=>{
 			.order('sort_order')
 	})
 	.then(r=>{
-		coreValues = Array.isArray(r.data) ? r.data : [];
+		const coreValues = Array.isArray(r.data) ? r.data : [];
 		return res.status(200).json(coreValues);
 	})
 	.catch(err => {

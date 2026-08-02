@@ -1,17 +1,25 @@
+'use strict';
+// EXPRESS
 const express               = require('express');
 const router                = express.Router();
-const generator             = require('generate-password');
 router.use(express.json());
-const {getIdAgent, vpAppFields, vpAppStatusHash} = require('./activities-helpers');
-const { 
-	convertArrayToObject,
-	hexToRgb } = require('conjunction-junction');
-
+// DATABASE
 const { createClient } = require('@supabase/supabase-js');
-const { notifyOfSubmission } = require('./notifications');
 const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseKey = process.env.SUPABASE_SECRET_KEY;
 const supabase = createClient(supabaseUrl, supabaseKey);
+// AUTH
+// OTHER LIBRARIES
+const { 
+	convertArrayToObject,
+	hexToRgb } = require('conjunction-junction');
+// INTERNAL REFERENCES
+const {getIdAgent} = require('./helpers');
+const {vpAppFields, 
+	vpAppStatusHash} = require('./db-static');
+const { notifyOfSubmission } = require('./notifications');
+
+// @@@@@@@@@@@ START ROUTER @@@@@@@@@@@@
 
 const getVPAppCompletionStatus = a => {
 	let status = 2; // returned, i.e. complete
@@ -24,7 +32,7 @@ const getVPAppCompletionStatus = a => {
 	return status;
 };
 
-const getAppById = (vp_temp_id, res) => {
+const getAppByTempId = (vp_temp_id, res) => {
 
 	return new Promise(resolve => {
 		resolve();
@@ -62,7 +70,21 @@ router.get('/:vp_temp_id', (req, res)=>{
 
 	const vp_temp_id = req.params.vp_temp_id;
 
-	return getAppById(vp_temp_id, res);
+	return getAppByTempId(vp_temp_id, res);
+});
+
+router.get('//', (req, res)=>{
+	// this is to return a blank app when none has been pre-populated
+	return new Promise(resolve => {
+		resolve();
+	})
+	.then(()=>{
+		return res.status(200).json({vp_app_status: 1, id_agent: 1, vpAppStatusHash});
+	})
+	.catch(err => {
+		console.error(err);
+		return res.status(500).json(err);
+	})
 });
 
 router.put('/', (req, res)=>{
@@ -82,8 +104,14 @@ router.put('/', (req, res)=>{
 	}
 	delete appConformed.id_vp_app;
 	if(!appConformed.vp_app_status){
-		appConformed.vp_app_status = 0;
+		appConformed.vp_app_status = 1;
 	}
+	if(!appConformed.id_agent){
+		appConformed.id_agent = 1;
+	}
+	const statusInHash = vpAppStatusHash[`${appConformed.vp_app_status}`] || {};
+	const tsField = statusInHash.ts || 'ts_returned';
+	appConformed[tsField] = new Date();
 
 	if(!id_vp_app){
 		appConformed.vp_temp_id = generator.generate({
@@ -104,7 +132,7 @@ router.put('/', (req, res)=>{
 		})
 		.then(r=>{
 			const {data, error} = r;
-			return getAppById(appConformed.vp_temp_id, res);
+			return getAppByTempId(appConformed.vp_temp_id, res);
 		})
 
 		.catch(err => {
@@ -127,7 +155,7 @@ router.put('/', (req, res)=>{
 	})
 	.then(r=>{
 		const {data, error} = r;
-		return getAppById(appConformed.vp_temp_id, res);
+		return getAppByTempId(appConformed.vp_temp_id, res);
 	})
 	.catch(err => {
 		console.error(err);

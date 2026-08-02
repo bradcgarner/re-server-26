@@ -105,7 +105,14 @@ create table contacts (
 
 create table vp_app (
 	id_vp_app serial primary key,
+
 	timestamp_created timestamp with time zone default current_timestamp,
+	ts_sent timestamp with time zone,
+	ts_returned timestamp with time zone,
+	ts_review timestamp with time zone,
+	ts_active timestamp with time zone,
+	ts_decline timestamp with time zone,
+
 	id_agent integer references agents(id_agent),
 	id_contact integer references contacts(id_contact),
 	vp_temp_id text,

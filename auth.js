@@ -1,24 +1,25 @@
 'use strict';
-
+// EXPRESS
 const express               = require('express');
 const router                = express.Router();
+router.use(express.json());
+// DATABASE
+const { createClient } = require('@supabase/supabase-js');
+const supabaseUrl = process.env.SUPABASE_URL;
+const supabaseKey = process.env.SUPABASE_SECRET_KEY;
+const supabase = createClient(supabaseUrl, supabaseKey);
+// AUTH
+// OTHER LIBRARIES
 const bcrypt                = require('bcryptjs');
 const generator             = require('generate-password');
 const jwt                   = require('jsonwebtoken');
 const { isPrimitiveNumber } = require('conjunction-junction');
-const logger                = require('log123').createLogger('auth.log');
+// INTERNAL REFERENCES
 const { sendPwReset }       = require('./notifications');
-
 const JWT_SECRET = process.env.JWT_SECRET;
 const JWT_EXPIRY = process.env.JWT_EXPIRY;
 
-const { createClient } = require('@supabase/supabase-js');
-const supabaseUrl = process.env.SUPABASE_URL;
-const supabaseKey = process.env.SUPABASE_SECRET_KEY;
-
-const supabase = createClient(supabaseUrl, supabaseKey);
-
-router.use(express.json());
+// @@@@@@@@@@@ START ROUTER @@@@@@@@@@@@
 
 const hashPassword = password => {
   return bcrypt.hash(password, 12);
@@ -69,6 +70,8 @@ const routesAllowed = {
 			'//api/contacts': true,
 			'//api/contacts/vps': true,
 			'//api/contacts/vp-app/*': true,
+			'//api/contacts/vp-app-contact/*': true,
+			'//api/contacts/vp-apps': true,
 			'//api/contacts/vp-groups': true,
 			'//api/contacts/*': true,
 			'//api/daily-plans': true,
@@ -97,13 +100,14 @@ const routesAllowed = {
     agent: {
 			'//api/activities': true,
 			'//api/contacts': true,
-			'//api/contacts/send-vp-app': true,
-			'//api/contacts/review-vp-app': true,
-			'//api/contacts/activate-vp': true,
-			'//api/contacts/open-vp-app': true,
-			'//api/contacts/decline-vp': true,
-			'//api/contacts/get-refs': true,
-			'//api/contacts/send-refs': true,
+			'//api/contacts/vp-app': true,
+			'//api/contacts/vp-app-send': true,
+			'//api/contacts/vp-app-review': true,
+			'//api/contacts/vp-app-activate': true,
+			'//api/contacts/vp-app-returned': true,
+			'//api/contacts/vp-app-decline': true,
+			'//api/contacts/refs-get': true,
+			'//api/contacts/refs-send': true,
 			'//api/daily-plans': true,
 			'//api/deals': true,
 			'//api/proformae': true,
@@ -363,7 +367,7 @@ router.post('/relogin', (req, res) => {
 	let agent;
 
   if(!authToken){
-    logger.info('user has no token');
+    console.log('user has no token');
     return res.status(400).json({message: 'missing auth token, cannot reauthenticate; please log in with username and password'});
   }
   return new Promise(resolve=>{
@@ -409,11 +413,9 @@ router.post('/relogin', (req, res) => {
         authToken:         newAuthToken,
         agent_permissions: agent.agent_permissions,
       };
-      // logger.info('userForResponse',userForResponse);
       return userForResponse;
     })
     .then(agent => {
-      // logger.info('agent',agent);
       return res.status(200).json(agent);
     })
     .catch(err => {

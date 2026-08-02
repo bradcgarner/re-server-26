@@ -1,20 +1,24 @@
+'use strict';
+// EXPRESS
 const express               = require('express');
 const router                = express.Router();
-const fs = require('fs');
 router.use(express.json());
-const {getIdAgent,
-	dealsFields} = require('./activities-helpers');
-
+// DATABASE
 const { createClient } = require('@supabase/supabase-js');
 const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseKey = process.env.SUPABASE_SECRET_KEY;
 const supabase = createClient(supabaseUrl, supabaseKey);
-
+// AUTH
 const { jwtStrategy } = require('./auth');
-const { precisionRound, isPrimitiveNumber } = require('conjunction-junction/build/basic');
 const userContainer = {};
 router.use((req, res, next)=>jwtStrategy(req, res, next, userContainer));
+// OTHER LIBRARIES
+const { precisionRound, 
+	isPrimitiveNumber } = require('conjunction-junction');
+// INTERNAL REFERENCES
+const {getIdAgent} = require('./helpers');
 
+// @@@@@@@@@@@ START ROUTER @@@@@@@@@@@@
 
 router.get('/', (req, res)=>{
 	const id_agent = getIdAgent(userContainer);

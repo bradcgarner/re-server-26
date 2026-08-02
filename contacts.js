@@ -1,24 +1,30 @@
+'use strict';
+// EXPRESS
 const express               = require('express');
 const router                = express.Router();
-const fs = require('fs');
 router.use(express.json());
-const {getIdAgent,
-	contactsFields,
-	vpAppStatusHash} = require('./activities-helpers');
-const generator             = require('generate-password');
-const { convertArrayToObject } = require('conjunction-junction');
-
+// DATABASE
 const { createClient } = require('@supabase/supabase-js');
 const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseKey = process.env.SUPABASE_SECRET_KEY;
 const supabase = createClient(supabaseUrl, supabaseKey);
-
+// AUTH
 const { jwtStrategy } = require('./auth');
-const { sendVPApp, sendReferrals } = require('./notifications');
 const userContainer = {};
 router.use((req, res, next)=>jwtStrategy(req, res, next, userContainer));
+// OTHER LIBRARIES
+const generator             = require('generate-password');
+// INTERNAL REFERENCES
+const {getIdAgent} = require('./helpers');
+const { convertArrayToObject } = require('conjunction-junction');
+const {
+	contactsFields,
+	vlStatic,
+	vpAppFields,
+	vpAppStatusHash } = require('./db-static');
 
-const vpStatusValueListId = 189; // match value_lists database id
+// @@@@@@@@@@@ START ROUTER @@@@@@@@@@@@
+
 
 const getContactById = (id_contact, res)=>{
 	const id_agent = getIdAgent(userContainer);
@@ -113,7 +119,6 @@ const getContactById = (id_contact, res)=>{
 		const { data, error } = r;
 		const applications = Array.isArray(data) ? data : [];
 		const app = applications[0] || {};
-		app.vpAppStatusHash = vpAppStatusHash;
 		contact.vp_app = app;
 
 		// GET VP REFERENCES
@@ -130,8 +135,8 @@ const getContactById = (id_contact, res)=>{
 	})
 	.then(r=>{
 		const { data, error } = r;
-		const refs = Array.isArray(data) ? data : [];
-		contact.vp_refs = refs;
+		const vp_refs = Array.isArray(data) ? data : [];
+		contact.vp_refs = vp_refs;
 
 		return res.status(200).json(contact);
 	})
@@ -140,8 +145,6 @@ const getContactById = (id_contact, res)=>{
 		return res.status(500).json(err);
 	})
 };
-
-
 
 router.get('/vps', (req, res)=>{
 	const id_agent = getIdAgent(userContainer);
@@ -157,6 +160,8 @@ router.get('/vps', (req, res)=>{
 				contact_vp_status,
 				contact_how_met,
 				contact_where_met,
+				contact_where_met_notes,
+				contact_notes,
 				contact_vp_categories,
 				contact_name_first,
 				contact_name_last,
@@ -166,7 +171,7 @@ router.get('/vps', (req, res)=>{
 				contact_address_city,
 				contact_address_state`)
 			.eq('id_agent', id_agent)
-			.eq('contact_vp_status', vpStatusValueListId)
+			.eq('contact_vp_status', vlStatic.contactVPStatusYes)
 			.order('contact_company', 'contact_name_last')
 	})
 	.then(r=>{
@@ -204,7 +209,7 @@ router.get('/vps', (req, res)=>{
 			}
 			return 0;
 		})
-		return res.status(200).json({vps,vpAppStatusHash});
+		return res.status(200).json({vps});
 		
 	})
 	.catch(err => {
@@ -231,7 +236,7 @@ router.get('/vp-groups', (req, res)=>{
 				contact_address_city,
 				contact_address_state`)
 			.eq('id_agent', id_agent)
-			.eq('contact_vp_status', vpStatusValueListId)
+			.eq('contact_vp_status', vlStatic.contactVPStatusYes)
 			.order('contact_company', 'contact_name_last')
 	})
 	.then(r=>{
@@ -275,7 +280,7 @@ router.get('/vp-groups', (req, res)=>{
 	})
 });
 
-router.get('/vp-app/:id_contact', (req, res)=>{
+router.get('/vp-app-contact/:id_contact', (req, res)=>{
 	const id_contact = req.params.id_contact;
 	if(!id_contact) throw { message: 'invalid id_contact' };
 	const id_agent = getIdAgent(userContainer);
@@ -293,8 +298,62 @@ router.get('/vp-app/:id_contact', (req, res)=>{
 	.then(r=>{
 		const { data, error } = r;
 		const vpApp = Array.isArray(data) && data[0]? data[0] : {};
-		vpApp.vpAppStatusHash = vpAppStatusHash;
 		return res.status(200).json(vpApp);
+	})
+	.catch(err => {
+		console.error(err);
+		return res.status(500).json(err);
+	})
+});
+
+router.get('/vp-app/:id_vp_app', (req, res)=>{
+	const id_vp_app = req.params.id_vp_app;
+	if(!id_vp_app) throw { message: 'invalid id_vp_app' };
+	const id_agent = getIdAgent(userContainer);
+
+	return new Promise(resolve => {
+		resolve();
+	})
+	.then(()=>{
+		return supabase
+			.from('vp_app')
+			.select(`*`)
+			.eq('id_agent', id_agent)
+			.eq('id_vp_app',id_vp_app)
+	})
+	.then(r=>{
+		const { data, error } = r;
+		const vpApp = Array.isArray(data) && data[0]? data[0] : {};
+		return res.status(200).json(vpApp);
+	})
+	.catch(err => {
+		console.error(err);
+		return res.status(500).json(err);
+	})
+});
+
+router.get('/vp-apps', (req, res)=>{
+	const id_agent = getIdAgent(userContainer);
+
+	return new Promise(resolve => {
+		resolve();
+	})
+	.then(()=>{
+		return supabase
+			.from('vp_app')
+			.select(`*`)
+			.eq('id_agent', id_agent)
+			.order('timestamp_created',{ascending: false})
+	})
+	.then(r=>{
+		const { data, error } = r;
+		const apps = Array.isArray(data) ? data : [];
+		apps.forEach(a=>{
+			const statusInHash = vpAppStatusHash[`${a.vp_app_status}`] || {};
+			const tsField = statusInHash.ts || 'timestamp_created';
+			a.ts = a[tsField];
+		});
+		return res.status(200).json(apps);
 	})
 	.catch(err => {
 		console.error(err);
@@ -337,7 +396,7 @@ router.get('/', (req, res)=>{
 	})
 });
 
-router.put('/get-refs', (req, res)=>{
+router.put('/refs-get', (req, res)=>{
 	const id_agent = getIdAgent(userContainer);
 	let vps = [];
 
@@ -421,7 +480,7 @@ router.put('/get-refs', (req, res)=>{
 			});
 		}
 		for(let k in referralBasketNew.include){
-			referralBasketNew.include[k] = {contact:{},refs:[]};
+			referralBasketNew.include[k] = {contact:{},vp_refs:[]};
 			theId = parseInt(k, 10);
 			contacts.forEach(c=>{
 				if(c.id_contact === theId){
@@ -430,7 +489,7 @@ router.put('/get-refs', (req, res)=>{
 			});
 			references.forEach(r=>{
 				if(r.id_vp_fu === theId){
-					referralBasketNew.include[k].refs.push(r);
+					referralBasketNew.include[k].vp_refs.push(r);
 				}
 			});
 		}
@@ -444,7 +503,7 @@ router.put('/get-refs', (req, res)=>{
 	})
 });
 
-router.put('/send-refs', (req, res)=>{
+router.put('/refs-send', (req, res)=>{
 	const id_agent = getIdAgent(userContainer);
 
 	const referrals = Array.isArray(req.body) ? req.body : null;
@@ -458,6 +517,7 @@ router.put('/send-refs', (req, res)=>{
 	})
 	.then(()=>{
 		sendReferrals(referrals);
+		return;
 	})
 	.then(()=>{
 		return res.status(200).json({ok: true});
@@ -468,7 +528,58 @@ router.put('/send-refs', (req, res)=>{
 	})
 });
 
-router.put('/send-vp-app', (req, res)=>{
+router.put('/vp-app', (req, res)=>{
+
+	const appRaw = req.body;
+	const id_vp_app = appRaw.id_vp_app;
+
+	const appConformed = {};
+	for(let k in vpAppFields){
+		appConformed[k] = appRaw[k] || null;
+	}
+	delete appConformed.id_vp_app;
+	if(!appConformed.vp_app_status){
+		appConformed.vp_app_status = 1;
+	}
+	if(!appConformed.id_agent){
+		appConformed.id_agent = 1;
+	}
+	const statusInHash = vpAppStatusHash[`${appConformed.vp_app_status}`] || {};
+	const tsField = statusInHash.ts || 'ts_returned';
+	appConformed[tsField] = new Date();
+
+	return new Promise(resolve => {
+		resolve();
+	})
+	.then(r=>{
+		return supabase
+			.from('vp_app')
+			.update(appConformed)
+			.eq('id_vp_app',id_vp_app)
+	})
+	.then(r=>{
+		return supabase
+			.from('vp_app')
+			.select(`*,
+				agents(
+					agent_name_first,
+					agent_name_last
+				)`)
+			.eq('vp_temp_id', appConformed.vp_temp_id);
+	})
+	.then(r=>{
+		const { data, error } = r;
+		const appFromDB = Array.isArray(data) && data[0] ? data[0] : {};
+		return res.status(200).json(appFromDB);
+	})
+	.catch(err => {
+		console.error(err);
+		return res.status(500).json(err);
+	})
+
+});
+
+router.put('/vp-app-send', (req, res)=>{
 	const vp = req.body;
 	const id_contact = vp.id_contact;
 
@@ -482,7 +593,8 @@ router.put('/send-vp-app', (req, res)=>{
 		return supabase
 			.from('vp_app')
 			.update({
-				vp_app_status: 1 // match with vpAppStatusHash
+				vp_app_status: 1,
+				ts_sent: new Date(), // match with vpAppStatusHash
 			})
 			.eq('id_vp_app',vp.id_vp_app)
 	})
@@ -490,7 +602,7 @@ router.put('/send-vp-app', (req, res)=>{
 		return supabase
 			.from('contacts')
 			.update({
-				contact_vp_status: vpStatusValueListId,
+				contact_vp_status: vlStatic.contactVPStatusYes,
 			})
 			.eq('id_contact',vp.id_contact)
 	})
@@ -504,7 +616,7 @@ router.put('/send-vp-app', (req, res)=>{
 
 });
 
-router.put('/review-vp-app', (req, res)=>{
+router.put('/vp-app-returned', (req, res)=>{
 	const vp = req.body;
 	const id_contact = vp.id_contact;
 
@@ -519,7 +631,8 @@ router.put('/review-vp-app', (req, res)=>{
 		return supabase
 			.from('vp_app')
 			.update({
-				vp_app_status: 3 // match with vpAppStatusHash
+				vp_app_status: 2,
+				ts_returned: new Date(), // match with vpAppStatusHash
 			})
 			.eq('id_vp_app',vp.id_vp_app)
 	})
@@ -527,7 +640,7 @@ router.put('/review-vp-app', (req, res)=>{
 		return supabase
 			.from('contacts')
 			.update({
-				contact_vp_status: vpStatusValueListId,
+				contact_vp_status: vlStatic.contactVPStatusYes,
 			})
 			.eq('id_contact',vp.id_contact)
 	})
@@ -541,7 +654,7 @@ router.put('/review-vp-app', (req, res)=>{
 
 });
 
-router.put('/activate-vp', (req, res)=>{
+router.put('/vp-app-review', (req, res)=>{
 	const vp = req.body;
 	const id_contact = vp.id_contact;
 
@@ -556,7 +669,8 @@ router.put('/activate-vp', (req, res)=>{
 		return supabase
 			.from('vp_app')
 			.update({
-				vp_app_status: 4 // match with vpAppStatusHash
+				vp_app_status: 3,
+				ts_review: new Date(), // match with vpAppStatusHash
 			})
 			.eq('id_vp_app',vp.id_vp_app)
 	})
@@ -564,7 +678,7 @@ router.put('/activate-vp', (req, res)=>{
 		return supabase
 			.from('contacts')
 			.update({
-				contact_vp_status: vpStatusValueListId,
+				contact_vp_status: vlStatic.contactVPStatusYes,
 			})
 			.eq('id_contact',vp.id_contact)
 	})
@@ -578,7 +692,50 @@ router.put('/activate-vp', (req, res)=>{
 
 });
 
-router.put('/open-vp-app', (req, res)=>{
+router.put('/vp-app-activate', (req, res)=>{
+	const v = req.body;
+	const vp = v.vp || {};
+	const email = v.email || {};
+	const id_contact = vp.id_contact;
+
+	// vp API = {
+	// 		id_contact: contact.id_contact,
+	// 		id_vp_app: vpApp.id_vp_app,
+	// }
+	return new Promise(resolve => {
+		resolve();
+	})
+	.then(()=>{
+		return supabase
+			.from('vp_app')
+			.update({
+				vp_temp_id: null,
+				vp_app_status: 4,
+				ts_active: new Date(), // match with vpAppStatusHash
+			})
+			.eq('id_vp_app',vp.id_vp_app)
+	})
+	.then(r=>{
+		return supabase
+			.from('contacts')
+			.update({
+				contact_vp_status: vlStatic.contactVPStatusYes,
+			})
+			.eq('id_contact',vp.id_contact)
+	})
+	.then(()=>{
+		notifyOfCompletion(email);
+
+		return getContactById(vp.id_contact, res);
+	})
+	.catch(err => {
+		console.error(err);
+		return res.status(500).json(err);
+	})
+
+});
+
+router.put('/vp-app-decline', (req, res)=>{
 	const vp = req.body;
 	const id_contact = vp.id_contact;
 
@@ -593,44 +750,8 @@ router.put('/open-vp-app', (req, res)=>{
 		return supabase
 			.from('vp_app')
 			.update({
-				vp_app_status: 2 // match with vpAppStatusHash
-			})
-			.eq('id_vp_app',vp.id_vp_app)
-	})
-	.then(r=>{
-		return supabase
-			.from('contacts')
-			.update({
-				contact_vp_status: vpStatusValueListId,
-			})
-			.eq('id_contact',vp.id_contact)
-	})
-	.then(r=>{
-		return getContactById(vp.id_contact, res);
-	})
-	.catch(err => {
-		console.error(err);
-		return res.status(500).json(err);
-	})
-
-});
-
-router.put('/decline-vp', (req, res)=>{
-	const vp = req.body;
-	const id_contact = vp.id_contact;
-
-	// vp API = {
-	// 		id_contact: contact.id_contact,
-	// 		id_vp_app: vpApp.id_vp_app,
-	// }
-	return new Promise(resolve => {
-		resolve();
-	})
-	.then(()=>{
-		return supabase
-			.from('vp_app')
-			.update({
-				vp_app_status: 5 // match with vpAppStatusHash
+				vp_app_status: 5, // match with vpAppStatusHash
+				ts_decline: new Date(),
 			})
 			.eq('id_vp_app',vp.id_vp_app)
 	})

@@ -1,28 +1,39 @@
+'use strict';
+// EXPRESS
 const express               = require('express');
 const router                = express.Router();
-const fs = require('fs');
 router.use(express.json());
-
-const { 
-	isObjectLiteral, 
-	convertArrayToObject } = require('conjunction-junction');
-
-const { getIdAgent,
-	formatActivityPut,
-	formatUpdatePromises, 
-	createFinalActivity } = require('./activities-helpers');
-
+// DATABASE
 const { createClient } = require('@supabase/supabase-js');
 const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseKey = process.env.SUPABASE_SECRET_KEY;
 const supabase = createClient(supabaseUrl, supabaseKey);
-
+// AUTH
 const { jwtStrategy } = require('./auth');
-const { isPrimitiveNumber } = require('conjunction-junction/build/basic');
-const { dateDelta } = require('conjunction-junction/build/date-time');
 const userContainer = {};
 router.use((req, res, next)=>jwtStrategy(req, res, next, userContainer));
+// OTHER LIBRARIES
+const { 
+	isObjectLiteral, 
+	convertArrayToObject,
+	isPrimitiveNumber,
+	dateDelta } = require('conjunction-junction');
+// INTERNAL REFERENCES
+const { getIdAgent,
+	formatActivityPut,
+	formatUpdatePromises, 
+	createFinalActivity } = require('./helpers');
 
+// @@@@@@@@@@@ START ROUTER @@@@@@@@@@@@
+
+const deleteActivity = id_activity => {
+	// not in use yet
+	`update activities set (id_activity_fu, id_contact_fu, id_vp_fu) = (null, null, null ) where id_activity = ${id_activity};
+	update connections set (id_activity, id_contact) = (null, null) where id_activity = ${id_activity};
+	delete from activities_deals where id_activity = ${id_activity};
+	delete from connections where id_activity = ${id_activity};
+	delete from activities where id_activity = ${id_activity};`
+};
 
 router.get('/follow-ups', (req, res)=>{
 	const id_agent = getIdAgent(userContainer);
